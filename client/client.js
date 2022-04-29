@@ -1,8 +1,8 @@
 /* ******************************************************************
  * Constantes de configuration
  * ****************************************************************** */
-const apiKey = "key1"; //"69617e9b-19db-4bf7-a33f-18d4e90ccab7";
-const serverUrl = "http://localhost:8080";
+const apiKey = "6728f7dc-119d-4db8-914e-cc2954355b14"; //"69617e9b-19db-4bf7-a33f-18d4e90ccab7";
+const serverUrl = "https://lifap5.univ-lyon1.fr";
 
 /* ******************************************************************
  * Gestion de la boîte de dialogue (a.k.a. modal) d'affichage de
@@ -26,6 +26,44 @@ function fetchWhoami() {
       }
     })
     .catch((erreur) => ({ err: erreur }));
+}
+
+function liste_pokemon(pokemon){
+  console.debug(`CALL liste_pokemon([${pokemon}])`);
+  const pokemon_html = pokemon
+  .map((opt,i) => `<tr>
+  <td> <img src=${pokemon[i].Images.Detail} width="64"/> </td>
+  <td> ${i} </td>
+  <td> ${pokemon [i].Name} </td>
+  <td> ${pokemon [i].Abilites} </td>
+  <td> ${pokemon [i].Types} </td>
+  </tr>`)
+  .join('\n');
+  return `${pokemon_html}`;
+}
+function afficher_pokemon(tab){
+  console.log(tab);
+  document.getElementById('test').innerHTML = tab;
+}
+
+/**
+ *  fonction permettant de charger des données depuis une ressource séparée
+ * @param {url} url une url
+ * @returns Une promesse
+ */
+function charge_donnees(url,callback) {
+  return fetch(url)
+    .then((response) => {console.log(response);return response.text() })
+    .then((txt) => {console.log(txt); return JSON.parse(txt)})
+    .then(callback);
+}
+
+function fetchPokemon(){
+  console.debug(`CALL init_menus()`);
+  //maj_annees(donnes_exemple);
+  charge_donnees(serverUrl + "/pokemon", (pokemon) => {
+    afficher_pokemon(liste_pokemon(pokemon));
+  });
 }
 
 /**
@@ -316,4 +354,5 @@ function initClientPokemons() {
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
+  fetchPokemon();
 });
