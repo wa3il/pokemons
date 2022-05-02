@@ -29,22 +29,96 @@ function fetchWhoami() {
 }
 
 function liste_pokemon(pokemon){
-  console.debug(`CALL liste_pokemon([${pokemon}])`);
+  //console.debug(`CALL liste_pokemon([${pokemon}])`);
   const pokemon_html = pokemon
-  .map((opt,i) => `<tr>
-  <td> <img src=${pokemon[i].Images.Detail} width="64"/> </td>
-  <td> ${i} </td>
-  <td> ${pokemon [i].Name} </td>
-  <td> ${pokemon [i].Abilites} </td>
+  .map((opt,i) => `<tr id ="${pokemon[i].Name}" ${ i == 0 ? 'class="is-selected"' : ''}>
+  <td><img src=${pokemon[i].Images.Detail} width="64"/></td>
+  <td>${i}</td>
+  <td><div class="content">${pokemon[i].Name}</div>  </td>
+  <td> ${pokemon [i].Abilities} </td>
   <td> ${pokemon [i].Types} </td>
   </tr>`)
   .join('\n');
   return `${pokemon_html}`;
 }
-function afficher_pokemon(tab){
-  console.log(tab);
-  document.getElementById('test').innerHTML = tab;
-}
+
+
+function pokemonDetail(pokemon,i){
+
+  const obj_abilite = pokemon[i].Abilities;
+  //console.log(obj);
+  const obj_liste_abilite = obj_abilite.map((ab) =>  `<li> ${ab} </li>`).join('\n');
+  //console.log(obj_liste);
+
+  const obj_resist = pokemon[i].Against;
+  const obj_liste_resist = Object.values(obj_resist)
+    .filter((val) => val > 1 )
+    .forEach((obj) =>  `<li> ${obj} </li>` )
+    //.join('\n'); 
+
+  const pokemonDetail_html =
+  `<div class="card">
+  <div class="card-header">
+    <div class="card-header-title">${pokemon[i].JapaneseName} (#${i})</div>
+  </div>
+  <div class="card-content">
+    <article class="media">
+      <div class="media-content">
+        <h1 class="title">${pokemon[i].Name}</h1>
+      </div>
+    </article>
+  </div>
+  <div class="card-content">
+    <article class="media">
+      <div class="media-content">
+        <div class="content has-text-left">
+          <p>Hit points: ${pokemon[i].Hp}</p>
+          
+          <h3>Abilities</h3>
+          <ul>
+            ${obj_liste_abilite}
+          </ul>
+          <h3>Resistant against</h3>
+          <ul>
+            ${obj_liste_resist}
+          </ul>
+          <h3>Weak against</h3>
+          <ul>
+            <li>Fire</li>
+            <li>Flying</li>
+            <li>Ice</li>
+            <li>Psychic</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="media-right">
+        <figure class="image is-475x475">
+          <img
+            class=""
+            src="https://assets.pokemon.com/assets/cms2/img/pokedex/full/001.png"
+            alt="Bulbasaur"
+          />
+        </figure>
+      </figure>
+    </article>
+  </div>
+  <div class="card-footer">
+    <article class="media">
+      <div class="media-content">
+        <button class="is-success button" tabindex="0">
+          Ajouter à mon deck
+        </button>
+      </div>
+    </article>
+  </div>
+  </div>`
+  
+    return `${pokemonDetail_html}`;
+  }
+
+  function afficher_pokemon(codeHTML,destination){
+    document.getElementById(destination).innerHTML = codeHTML;
+  }
 
 /**
  *  fonction permettant de charger des données depuis une ressource séparée
@@ -55,14 +129,22 @@ function charge_donnees(url,callback) {
   return fetch(url)
     .then((response) => {console.log(response);return response.text() })
     .then((txt) => {console.log(txt); return JSON.parse(txt)})
-    .then(callback);
+    .then(callback)
+    .catch((erreur) => ({ err: erreur }));
 }
 
 function fetchPokemon(){
   console.debug(`CALL init_menus()`);
   //maj_annees(donnes_exemple);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
-    afficher_pokemon(liste_pokemon(pokemon));
+    afficher_pokemon(liste_pokemon(pokemon),'test');
+    //console.log(pokemon[5]);
+
+    pokemon.forEach((pok,i) => { 
+      //console.log(document.getElementById('' + pok.Name ));
+      const element = document.getElementById('' + pok.Name);
+      element.onclick = () => afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
+    }) 
   });
 }
 
@@ -99,12 +181,17 @@ function genereModaleLoginBody(etatCourant) {
   return {
     html: `
   <section class="modal-card-body">
-    <p>${text}</p>
+    <div>
+      <label for="Api">Api-key:</label>
+      <input type="password" id="api-key" name="Api" required>
+    </div>
+    
   </section>
-  `,
-    callbacks: {},
-  };
-}
+  `//<p>${text}</p>
+  ,
+    callbacks: {}
+  }
+};
 
 /**
  * Génère le code HTML du titre de la modale de login et les callbacks associés.
@@ -132,6 +219,15 @@ function genereModaleLoginHeader(etatCourant) {
   };
 }
 
+function etatconnecte(uti){
+  res = `<p> ${uti} </p>`;
+  return res;
+}
+function etataffiche(uti){
+  const etatactuelle = document.getElementById('etat-du-modal');
+  etatactuelle.innerHTML = etatconnecte(uti);
+  }
+
 /**
  * Génère le code HTML du base de page de la modale de login et les callbacks associés.
  *
@@ -142,13 +238,34 @@ function genereModaleLoginHeader(etatCourant) {
 function genereModaleLoginFooter(etatCourant) {
   return {
     html: `
-  <footer class="modal-card-foot" style="justify-content: flex-end">
-    <button id="btn-close-login-modal2" class="button">Fermer</button>
+  <footer class="modal-card-foot" style="justify-content: flex">
+    <button id="btn-close-login-modal2" class="button">Annuler</button>
+    <button id="btn-valid-login-modal2" class="button">Valider</button>
   </footer>
   `,
     callbacks: {
       "btn-close-login-modal2": {
         onclick: () => majEtatEtPage(etatCourant, { loginModal: false }),
+      },
+      "btn-valid-login-modal2": {
+        onclick: () => {
+          const input = document.getElementById('api-key').value;
+          console.log(input);
+          console.log(etatCourant.login);
+          majEtatEtPage(etatCourant, { loginModal: false});
+          const utilisateur = etatCourant.login;
+          etataffiche(utilisateur); 
+          /* if (input == apiKey){
+            majEtatEtPage(etatCourant, { loginModal: false});
+            const utilisateur = etatCourant.login;
+            
+          }else{
+            majEtatEtPage(etatCourant, { loginModal: false});
+            const utilisateur = etatCourant.login;
+            etataffiche(utilisateur); 
+          } */
+          
+        },
       },
     },
   };
@@ -204,6 +321,7 @@ function afficheModaleConnexion(etatCourant) {
 function genereBoutonConnexion(etatCourant) {
   const html = `
   <div class="navbar-end">
+    <div id="etat-du-modal" style="border-top-width: 20 px"></div>
     <div class="navbar-item">
       <div class="buttons">
         <a id="btn-open-login-modal" class="button is-light"> Connexion </a>
@@ -355,4 +473,5 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
   fetchPokemon();
+  console.log("6728f7dc-119d-4db8-914e-cc2954355b14")
 });
