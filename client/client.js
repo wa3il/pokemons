@@ -46,15 +46,18 @@ function liste_pokemon(pokemon){
 function pokemonDetail(pokemon,i){
 
   const obj_abilite = pokemon[i].Abilities;
-  //console.log(obj);
   const obj_liste_abilite = obj_abilite.map((ab) =>  `<li> ${ab} </li>`).join('\n');
-  //console.log(obj_liste);
 
   const obj_resist = pokemon[i].Against;
-  const obj_liste_resist = Object.values(obj_resist)
-    .filter((val) => val > 1 )
-    .forEach((obj) =>  `<li> ${obj} </li>` )
-    //.join('\n'); 
+  const obj_resist_tab = Object.entries(obj_resist)
+  .filter(([elem,value]) => value < 1 )
+  .map((res) =>  `<li> ${res[0]} </li>`).join('\n');
+
+  const obj_weak = pokemon[i].Against;
+  const obj_weak_list = Object.entries(obj_weak)
+  .filter(([elem,value]) => value > 1 )
+  .map((res) =>  `<li> ${res[0]} </li>`).join('\n');
+ 
 
   const pokemonDetail_html =
   `<div class="card">
@@ -73,21 +76,17 @@ function pokemonDetail(pokemon,i){
       <div class="media-content">
         <div class="content has-text-left">
           <p>Hit points: ${pokemon[i].Hp}</p>
-          
           <h3>Abilities</h3>
           <ul>
             ${obj_liste_abilite}
           </ul>
           <h3>Resistant against</h3>
           <ul>
-            ${obj_liste_resist}
+            ${obj_resist_tab}
           </ul>
           <h3>Weak against</h3>
           <ul>
-            <li>Fire</li>
-            <li>Flying</li>
-            <li>Ice</li>
-            <li>Psychic</li>
+            ${obj_weak_list}
           </ul>
         </div>
       </div>
@@ -95,8 +94,8 @@ function pokemonDetail(pokemon,i){
         <figure class="image is-475x475">
           <img
             class=""
-            src="https://assets.pokemon.com/assets/cms2/img/pokedex/full/001.png"
-            alt="Bulbasaur"
+            src=${pokemon[i].Images.Detail}
+            alt="${pokemon[i].Name}"
           />
         </figure>
       </figure>
@@ -133,18 +132,32 @@ function charge_donnees(url,callback) {
     .catch((erreur) => ({ err: erreur }));
 }
 
+function maj_pokemon(pokemon){
+  console.debug(`CALL maj pokemon`);
+  afficher_pokemon(liste_pokemon(pokemon),'test');
+
+  pokemon.forEach((pok,i) => { 
+    const element = document.getElementById('' + pok.Name);
+    element.onclick = () => afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
+    
+  })
+}
+
 function fetchPokemon(){
   console.debug(`CALL init_menus()`);
   //maj_annees(donnes_exemple);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
-    afficher_pokemon(liste_pokemon(pokemon),'test');
-    //console.log(pokemon[5]);
 
-    pokemon.forEach((pok,i) => { 
-      //console.log(document.getElementById('' + pok.Name ));
-      const element = document.getElementById('' + pok.Name);
-      element.onclick = () => afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
-    }) 
+    //affichage du detail du premier pokemon
+    afficher_pokemon(pokemonDetail(pokemon,0),'detail-pokemon');
+    // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
+    maj_pokemon(pokemon);
+
+    document.getElementById('input-pokemon').onchange = () => {
+      const tri = tri_tab(pokemon,document.getElementById('input-pokemon').value);
+      maj_pokemon(tri);
+    }
+    
   });
 }
 
@@ -338,6 +351,14 @@ function genereBoutonConnexion(etatCourant) {
   };
 }
 
+function tri_tab(pokemon,mot){
+  const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
+  console.log(tri);
+  return tri;
+  //const name_pokemon = pokemon[0].Name;
+  //console.log(name_pokemon);
+}
+
 /**
  * Génère le code HTML de la barre de navigation et les callbacks associés.
  * @param {Etat} etatCourant
@@ -350,16 +371,24 @@ function genereBarreNavigation(etatCourant) {
     html: `
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar">
-      <div class="navbar-item"><div class="buttons">
-          <a id="btn-pokedex" class="button is-light"> Pokedex </a>
-          <a id="btn-combat" class="button is-light"> Combat </a>
-      </div></div>
+      <div class="navbar-item">
+        <div class="field">
+          <div class="control has-icons_left">
+            <input class="input" id="input-pokemon" placeholder="Chercher un pokemon" type="text">
+          </div>
+        </div>
+        <div class="buttons">
+            <a id="btn-pokedex" class="button is-light"> Pokedex </a>
+            <a id="btn-combat" class="button is-light"> Combat </a>
+        </div>
+      </div>
       ${connexion.html}
     </div>
   </nav>`,
     callbacks: {
       ...connexion.callbacks,
       "btn-pokedex": { onclick: () => console.log("click bouton pokedex") },
+      
     },
   };
 }
