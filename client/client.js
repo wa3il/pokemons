@@ -13,8 +13,11 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
  * Fait une requête GET authentifiée sur /whoami
  * @returns une promesse du login utilisateur ou du message d'erreur
  */
-function fetchWhoami() {
-  return fetch(serverUrl + "/whoami", { headers: { "Api-Key": apiKey } })
+ function fetchWhoami() {
+  const user = document.getElementById("api-key").value;
+  console.log(user);
+  
+  return fetch(serverUrl + "/whoami", { headers: { "Api-Key": user } })
     .then((response) => {
       if (response.status === 401) {
         return response.json().then((json) => {
@@ -27,6 +30,43 @@ function fetchWhoami() {
     })
     .catch((erreur) => ({ err: erreur }));
 }
+/**
+ * Fait une requête sur le serveur et insère le login dans la modale d'affichage
+ * de l'utilisateur puis déclenche l'affichage de cette modale.
+ *
+ * @param {Etat} etatCourant l'état courant
+ * @returns Une promesse de mise à jour
+ */
+ function lanceWhoamiEtInsereLogin(etatCourant) {
+  const erreur =  `
+  <section class="modal-card-body">
+  <p id="elt-affichage-login">
+    <div id="affiche-erreur">
+      <div class="notification is-danger">
+        Api non reconnue ! veuillez recommencer !
+      </div>
+    </div>
+  </p>
+  </section>
+  ` ;
+
+  return fetchWhoami().then((data) => {
+    majEtatEtPage(etatCourant, {
+      login: data.user, // qui vaut undefined en cas d'erreur
+      errLogin: data.err, // qui vaut undefined si tout va bien
+      loginModal: false, // on affiche la modale
+    });
+    if (data.user == undefined){
+      majEtatEtPage(etatCourant, {loginModal : true});
+      document.getElementById('affiche-erreur').innerHTML = erreur;
+      
+    }
+    else {
+      alert(`You are connected :  ${data.user}`);
+    }
+  });
+}
+
 
 function liste_pokemon(pokemon){
   //console.debug(`CALL liste_pokemon([${pokemon}])`);
@@ -161,22 +201,6 @@ function fetchPokemon(){
   });
 }
 
-/**
- * Fait une requête sur le serveur et insère le login dans la modale d'affichage
- * de l'utilisateur puis déclenche l'affichage de cette modale.
- *
- * @param {Etat} etatCourant l'état courant
- * @returns Une promesse de mise à jour
- */
-function lanceWhoamiEtInsereLogin(etatCourant) {
-  return fetchWhoami().then((data) => {
-    majEtatEtPage(etatCourant, {
-      login: data.user, // qui vaut undefined en cas d'erreur
-      errLogin: data.err, // qui vaut undefined si tout va bien
-      loginModal: true, // on affiche la modale
-    });
-  });
-}
 
 /**
  * Génère le code HTML du corps de la modale de login. On renvoie en plus un
@@ -193,14 +217,14 @@ function genereModaleLoginBody(etatCourant) {
       : etatCourant.login;
   return {
     html: `
-  <section class="modal-card-body">
-    <div>
-      <label for="Api">Api-key:</label>
-      <input type="password" id="api-key" name="Api" required>
+    <section class="modal-card-body">
+    <div id="elt-affichage-login">
+    <p id="affiche-erreur">
+    </p>
+    <label for="Api">Api-key:</label>
+    <input type="password" id="api-key" >
     </div>
-    
-  </section>
-  `//<p>${text}</p>
+  </section>`
   ,
     callbacks: {}
   }
@@ -232,10 +256,10 @@ function genereModaleLoginHeader(etatCourant) {
   };
 }
 
-function etatconnecte(uti){
+/* function etatconnecte(uti){
   res = `<p> ${uti} </p>`;
   return res;
-}
+} */
 function etataffiche(uti){
   const etatactuelle = document.getElementById('etat-du-modal');
   etatactuelle.innerHTML = etatconnecte(uti);
@@ -262,21 +286,7 @@ function genereModaleLoginFooter(etatCourant) {
       },
       "btn-valid-login-modal2": {
         onclick: () => {
-          const input = document.getElementById('api-key').value;
-          console.log(input);
-          console.log(etatCourant.login);
-          majEtatEtPage(etatCourant, { loginModal: false});
-          const utilisateur = etatCourant.login;
-          etataffiche(utilisateur); 
-          /* if (input == apiKey){
-            majEtatEtPage(etatCourant, { loginModal: false});
-            const utilisateur = etatCourant.login;
-            
-          }else{
-            majEtatEtPage(etatCourant, { loginModal: false});
-            const utilisateur = etatCourant.login;
-            etataffiche(utilisateur); 
-          } */
+          afficheModaleConnexion(etatCourant);
           
         },
       },
@@ -345,7 +355,7 @@ function genereBoutonConnexion(etatCourant) {
     html: html,
     callbacks: {
       "btn-open-login-modal": {
-        onclick: () => afficheModaleConnexion(etatCourant),
+        onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
       },
     },
   };
