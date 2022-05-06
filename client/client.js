@@ -49,6 +49,17 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
   </p>
   </section>
   ` ;
+  const reussie = `
+  <section class="modal-card-body">
+  <p id="elt-affichage-login">
+    <div id="affiche-erreur">
+      <div class="notification is-success">
+        Connexion réussie
+      </div>
+    </div>
+  </p>
+  </section>
+  `;
 
   return fetchWhoami().then((data) => {
     majEtatEtPage(etatCourant, {
@@ -62,7 +73,9 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
       
     }
     else {
-      alert(`You are connected :  ${data.user}`);
+      majEtatEtPage(etatCourant, {loginModal : true, login : data.user});
+      document.getElementById('affiche-erreur').innerHTML = reussie;
+      alert(`Connexion réussie. Utilisateur :  ${data.user}`);
     }
   });
 }
@@ -77,6 +90,7 @@ function liste_pokemon(pokemon){
   <td><div class="content">${pokemon[i].Name}</div>  </td>
   <td> ${pokemon [i].Abilities} </td>
   <td> ${pokemon [i].Types} </td>
+  
   </tr>`)
   .join('\n');
   return `${pokemon_html}`;
@@ -176,9 +190,15 @@ function maj_pokemon(pokemon){
   console.debug(`CALL maj pokemon`);
   afficher_pokemon(liste_pokemon(pokemon),'test');
 
+
   pokemon.forEach((pok,i) => { 
     const element = document.getElementById('' + pok.Name);
-    element.onclick = () => afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
+    element.onclick = () => {
+    pokemon.map((opt,i)=>document.getElementById('' + pokemon[i].Name).className=" ");      
+    element.className="is-selected";
+    afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
+    }
+  
     
   })
 }
@@ -217,13 +237,21 @@ function genereModaleLoginBody(etatCourant) {
       : etatCourant.login;
   return {
     html: `
-    <section class="modal-card-body">
-    <div id="elt-affichage-login">
-    <p id="affiche-erreur">
-    </p>
-    <label for="Api">Api-key:</label>
-    <input type="password" id="api-key" >
+  <section class="modal-card-body">
+    <div class="field">
+      <p class="control has-icons-left">
+        <input id="api-key" class="input" type="password" placeholder="API-KEY">
+          <span class="icon is-small is-left">
+            <i class="fas fa-lock"></i>
+          </span>
+      </p>
     </div>
+
+    <div  id="elt-affichage-login" >
+      <p id="affiche-erreur">
+      </p>
+    </div>
+
   </section>`
   ,
     callbacks: {}
@@ -276,8 +304,8 @@ function genereModaleLoginFooter(etatCourant) {
   return {
     html: `
   <footer class="modal-card-foot" style="justify-content: flex">
-    <button id="btn-close-login-modal2" class="button">Annuler</button>
-    <button id="btn-valid-login-modal2" class="button">Valider</button>
+  <button id="btn-valid-login-modal2" class="button ">Valider</button>
+  <button id="btn-close-login-modal2" class="button ">Annuler</button>
   </footer>
   `,
     callbacks: {
@@ -341,25 +369,79 @@ function afficheModaleConnexion(etatCourant) {
  * @returns un objet contenant le code HTML dans le champ html et la description
  * des callbacks à enregistrer dans le champ callbacks
  */
-function genereBoutonConnexion(etatCourant) {
-  const html = `
-  <div class="navbar-end">
+ function genereBoutonConnexion(etatCourant) {
+
+  const htmlConnecte = `
+  <div class="navbar-end ">
     <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-    <div class="navbar-item">
-      <div class="buttons">
-        <a id="btn-open-login-modal" class="button is-light"> Connexion </a>
-      </div>
+    <div class="navbar-item ">
+      <p class="buttons">
+        <a id="btn-open-login-modal" class="button is-success " > <span> Connexion </span> </a>
+      </p>
     </div>
   </div>`;
-  return {
-    html: html,
-    callbacks: {
-      "btn-open-login-modal": {
-        onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
+
+  const htmlDeconnecte =  `
+  <div class="navbar-end ">
+  <div class="field">
+      <p  id="utilisateur" class="control has-icons-right">
+      ${etatCourant.login}
+          <span class="icon is-small is-left">
+            <i class="fas fa-user"></i>
+          </span>
+      </p>
+      </div>
+    </div>
+   
+  <div class="navbar-end ">
+      <div id="etat-du-modal" style="border-top-width: 20 px"></div>
+      <div class="navbar-item ">
+        <p class="buttons">
+          <a id="btn-open-logout-modal" class="button is-danger " > <span> Déconnexion </span> </a>
+        </p>
+      </div>
+    </div>`;
+
+  if(etatCourant.login==undefined) {
+    return {
+      html: htmlConnecte,
+      callbacks: {
+        "btn-open-login-modal": {
+          onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
+        }, 
       },
+  
+    };
+  }
+  else {  
+    return {
+    html: htmlDeconnecte,
+    callbacks: {
+      "btn-open-logout-modal": {
+        onclick: () => majEtatEtPage(etatCourant, {login : undefined}),
+      }, 
     },
+
   };
 }
+}
+
+
+
+/*  function paginationPokemone(data) {
+  const tab=data.slice(0,10);
+  afficher_pokemon(tab);
+  document.getElementById("pagination").onclick(
+    tab.slice(tab.length, tab.length+10)
+    
+  )
+}  */
+
+
+
+
+
+
 
 function tri_tab(pokemon,mot){
   const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
@@ -392,8 +474,8 @@ function genereBarreNavigation(etatCourant) {
             <a id="btn-combat" class="button is-light"> Combat </a>
         </div>
       </div>
-      ${connexion.html}
     </div>
+    ${connexion.html}
   </nav>`,
     callbacks: {
       ...connexion.callbacks,
@@ -402,6 +484,12 @@ function genereBarreNavigation(etatCourant) {
     },
   };
 }
+
+
+
+/* function genererFooterNavigation(pokemon) {
+  paginationPokemone(liste_pokemon(pokemon,'test'));
+} */
 
 /**
  * Génére le code HTML de la page ainsi que l'ensemble des callbacks à
@@ -414,6 +502,9 @@ function genereBarreNavigation(etatCourant) {
 function generePage(etatCourant) {
   const barredeNavigation = genereBarreNavigation(etatCourant);
   const modaleLogin = genereModaleLogin(etatCourant);
+/*   const footerNavigation = genererFooterNavigation(pokemon);*/  
+
+
   // remarquer l'usage de la notation ... ci-dessous qui permet de "fusionner"
   // les dictionnaires de callbacks qui viennent de la barre et de la modale.
   // Attention, les callbacks définis dans modaleLogin.callbacks vont écraser
@@ -487,6 +578,7 @@ function enregistreCallbacks(callbacks) {
  */
 function majPage(etatCourant) {
   console.log("CALL majPage");
+/*   console.log(etatCourant.login);*/  
   const page = generePage(etatCourant);
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
@@ -512,5 +604,5 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
   fetchPokemon();
-  console.log("6728f7dc-119d-4db8-914e-cc2954355b14")
+  console.log("cbbf7dc5-f749-44a6-9d9c-32858e355a37")
 });
