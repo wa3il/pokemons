@@ -49,6 +49,17 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
   </p>
   </section>
   ` ;
+  const reussie = `
+  <section class="modal-card-body">
+  <p id="elt-affichage-login">
+    <div id="affiche-erreur">
+      <div class="notification is-success">
+        Connexion réussie
+      </div>
+    </div>
+  </p>
+  </section>
+  `;
 
   return fetchWhoami().then((data) => {
     majEtatEtPage(etatCourant, {
@@ -62,7 +73,9 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
       
     }
     else {
-      alert(`You are connected :  ${data.user}`);
+      majEtatEtPage(etatCourant, {loginModal : true, login : data.user});
+      document.getElementById('affiche-erreur').innerHTML = reussie;
+      alert(`Connexion réussie. Utilisateur :  ${data.user}`);
     }
   });
 }
@@ -173,12 +186,18 @@ function charge_donnees(url,callback) {
 }
 
 function maj_pokemon(pokemon){
-  //console.debug(`CALL maj pokemon`);
+  console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon),'test');
+
 
   pokemon.forEach((pok,i) => { 
     const element = document.getElementById('' + pok.Name);
-    element.onclick = () => afficher(pokemonDetail(pokemon,i),'detail-pokemon');
+    element.onclick = () => {
+    pokemon.map((opt,i)=>document.getElementById('' + pokemon[i].Name).className=" ");      
+    element.className="is-selected";
+    afficher(pokemonDetail(pokemon,i),'detail-pokemon');
+    }
+  
     
   })
 }
@@ -370,12 +389,20 @@ function genereModaleLoginBody(etatCourant) {
   return {
     html: `
     <section class="modal-card-body">
-    <div id="elt-affichage-login">
-    <p id="affiche-erreur">
-    </p>
-    <label for="Api">Api-key:</label>
-    <input type="password" id="api-key" >
+    <div class="field">
+      <p class="control has-icons-left">
+        <input id="api-key" class="input" type="password" placeholder="API-KEY">
+          <span class="icon is-small is-left">
+            <i class="fas fa-lock"></i>
+          </span>
+      </p>
     </div>
+
+    <div  id="elt-affichage-login" >
+      <p id="affiche-erreur">
+      </p>
+    </div>
+
   </section>`
   ,
     callbacks: {}
@@ -490,24 +517,61 @@ function afficheModaleConnexion(etatCourant) {
  * @returns un objet contenant le code HTML dans le champ html et la description
  * des callbacks à enregistrer dans le champ callbacks
  */
-function genereBoutonConnexion(etatCourant) {
-  const html = `
-  <div class="navbar-end">
+ function genereBoutonConnexion(etatCourant) {
+
+  const htmlConnecte = `
+  <div class="navbar-end ">
     <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-    <div class="navbar-item">
-      <div class="buttons">
-        <a id="btn-open-login-modal" class="button is-light"> Connexion </a>
-      </div>
+    <div class="navbar-item ">
+      <p class="buttons">
+        <a id="btn-open-login-modal" class="button is-success " > <span> Connexion </span> </a>
+      </p>
     </div>
   </div>`;
-  return {
-    html: html,
-    callbacks: {
-      "btn-open-login-modal": {
-        onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
+
+  const htmlDeconnecte =  `
+  <div class="navbar-end ">
+  <div class="field">
+      <p  id="utilisateur" class="control has-icons-right">
+      ${etatCourant.login}
+          <span class="icon is-small is-left">
+            <i class="fas fa-user"></i>
+          </span>
+      </p>
+      </div>
+    </div>
+   
+  <div class="navbar-end ">
+      <div id="etat-du-modal" style="border-top-width: 20 px"></div>
+      <div class="navbar-item ">
+        <p class="buttons">
+          <a id="btn-open-logout-modal" class="button is-danger " > <span> Déconnexion </span> </a>
+        </p>
+      </div>
+    </div>`;
+
+  if(etatCourant.login==undefined) {
+    return {
+      html: htmlConnecte,
+      callbacks: {
+        "btn-open-login-modal": {
+          onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
+        }, 
       },
+  
+    };
+  }
+  else {  
+    return {
+    html: htmlDeconnecte,
+    callbacks: {
+      "btn-open-logout-modal": {
+        onclick: () => majEtatEtPage(etatCourant, {login : undefined}),
+      }, 
     },
+
   };
+}
 }
 
 
