@@ -15,7 +15,7 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
  */
  function fetchWhoami() {
   const user = document.getElementById("api-key").value;
-  console.log(user);
+  //console.log(user);
   
   return fetch(serverUrl + "/whoami", { headers: { "Api-Key": user } })
     .then((response) => {
@@ -49,17 +49,6 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
   </p>
   </section>
   ` ;
-  const reussie = `
-  <section class="modal-card-body">
-  <p id="elt-affichage-login">
-    <div id="affiche-erreur">
-      <div class="notification is-success">
-        Connexion réussie
-      </div>
-    </div>
-  </p>
-  </section>
-  `;
 
   return fetchWhoami().then((data) => {
     majEtatEtPage(etatCourant, {
@@ -73,9 +62,7 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
       
     }
     else {
-      majEtatEtPage(etatCourant, {loginModal : true, login : data.user});
-      document.getElementById('affiche-erreur').innerHTML = reussie;
-      alert(`Connexion réussie. Utilisateur :  ${data.user}`);
+      alert(`You are connected :  ${data.user}`);
     }
   });
 }
@@ -86,18 +73,17 @@ function liste_pokemon(pokemon){
   const pokemon_html = pokemon
   .map((opt,i) => `<tr id ="${pokemon[i].Name}" ${ i == 0 ? 'class="is-selected"' : ''}>
   <td><img src=${pokemon[i].Images.Detail} width="64"/></td>
-  <td>${i}</td>
+  <td>${pokemon[i].PokedexNumber}</td>
   <td><div class="content">${pokemon[i].Name}</div>  </td>
   <td> ${pokemon [i].Abilities} </td>
   <td> ${pokemon [i].Types} </td>
-  
   </tr>`)
   .join('\n');
   return `${pokemon_html}`;
 }
 
 
-function pokemonDetail(pokemon,i){
+function pokemonDetail(pokemon,i){ 
 
   const obj_abilite = pokemon[i].Abilities;
   const obj_liste_abilite = obj_abilite.map((ab) =>  `<li> ${ab} </li>`).join('\n');
@@ -116,7 +102,7 @@ function pokemonDetail(pokemon,i){
   const pokemonDetail_html =
   `<div class="card">
   <div class="card-header">
-    <div class="card-header-title">${pokemon[i].JapaneseName} (#${i})</div>
+    <div class="card-header-title">${pokemon[i].JapaneseName} (#${pokemon[i].PokedexNumber})</div>
   </div>
   <div class="card-content">
     <article class="media">
@@ -169,7 +155,7 @@ function pokemonDetail(pokemon,i){
     return `${pokemonDetail_html}`;
   }
 
-  function afficher_pokemon(codeHTML,destination){
+  function afficher(codeHTML,destination){
     document.getElementById(destination).innerHTML = codeHTML;
   }
 
@@ -187,40 +173,186 @@ function charge_donnees(url,callback) {
 }
 
 function maj_pokemon(pokemon){
-  console.debug(`CALL maj pokemon`);
-  afficher_pokemon(liste_pokemon(pokemon),'test');
-
+  //console.debug(`CALL maj pokemon`);
+  afficher(liste_pokemon(pokemon),'test');
 
   pokemon.forEach((pok,i) => { 
     const element = document.getElementById('' + pok.Name);
-    element.onclick = () => {
-    pokemon.map((opt,i)=>document.getElementById('' + pokemon[i].Name).className=" ");      
-    element.className="is-selected";
-    afficher_pokemon(pokemonDetail(pokemon,i),'detail-pokemon');
-    }
-  
+    element.onclick = () => afficher(pokemonDetail(pokemon,i),'detail-pokemon');
     
   })
 }
 
-function fetchPokemon(){
-  console.debug(`CALL init_menus()`);
-  //maj_annees(donnes_exemple);
-  charge_donnees(serverUrl + "/pokemon", (pokemon) => {
+function chercher(pokemon){
+  document.getElementById('input-pokemon').oninput = () => {
+    const cherche_liste = chercher_dans(pokemon,document.getElementById('input-pokemon').value);
+    maj_pokemon(cherche_liste);
+    tri(cherche_liste);
+  }
 
-    //affichage du detail du premier pokemon
-    afficher_pokemon(pokemonDetail(pokemon,0),'detail-pokemon');
-    // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
-    maj_pokemon(pokemon);
+}
 
-    document.getElementById('input-pokemon').onchange = () => {
-      const tri = tri_tab(pokemon,document.getElementById('input-pokemon').value);
-      maj_pokemon(tri);
+function chercher_dans(pokemon,mot){
+  const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
+  return tri;
+  //const name_pokemon = pokemon[0].Name;
+  //console.log(name_pokemon);
+}
+
+function tri(pokemon){
+  tri_name(pokemon);
+  tri_pokedex_number(pokemon);
+  tri_abilite_liste(pokemon);
+  tri_types_liste(pokemon);
+}
+ 
+function tri_name(pokemon){
+  html_ordre_alpha = `<span>Name</span>#&nbsp
+  <span class="icon"><i class="fas fa-angle-up"></i></span>`
+
+  html_ordre_Nalpha = `<span>Name</span>#&nbsp
+  <span class="icon"><i class="fas fa-angle-down"></i></span>`
+
+  document.getElementById('name-pokemon').onclick = () => {
+    const pokemon_premier = pokemon[0].Name;
+    const liste_trie = pokemon;
+    const tri_nom = liste_trie.sort((a , b) => { return a.Name.localeCompare(b.Name)});
+
+    if (pokemon_premier == tri_nom[0].Name) {
+      maj_pokemon(tri_nom.reverse());
+      document.getElementById('name-pokemon').innerHTML = html_ordre_alpha;
     }
-    
+    else{
+      maj_pokemon(tri_nom);
+      document.getElementById('name-pokemon').innerHTML = html_ordre_Nalpha;
+    }
+  }
+}
+
+function tri_pokedex_number(pokemon){
+  html_ordre_decroissant = `<span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>`
+
+  html_ordre_croissant = `<span class="icon"><span>#&nbsp</span><i class="fas fa-angle-down"></i></span>`
+
+  document.getElementById('number-pokemon').onclick = () => {
+    const pokemon_premier = pokemon[0].PokedexNumber;
+    const liste_trie = pokemon;
+    const tri_number = liste_trie.sort((a , b) => { return parseFloat(a.PokedexNumber) - parseFloat(b.PokedexNumber);});
+
+    if (pokemon_premier == tri_number[0].PokedexNumber) {
+      maj_pokemon(tri_number.reverse());
+      document.getElementById('number-pokemon').innerHTML = html_ordre_decroissant;
+    }
+    else{
+      maj_pokemon(tri_number);
+      document.getElementById('number-pokemon').innerHTML = html_ordre_croissant;
+    }
+  }
+}
+
+function tri_abilite_liste(pokemon){
+  html_ordre_abilite = `<span>Abilities</span>
+  <span class="icon"><i class="fas fa-angle-up"></i></span>`
+
+  html_ordre_Nabilte = `<span>Abilities</span>
+  <span class="icon"><i class="fas fa-angle-down"></i></span>`
+
+  document.getElementById('abilite-pokemon').onclick = () => {
+    const pokemon_premier = pokemon[0].Abilities;
+    const liste_trie = pokemon;
+    const tri_abilite = liste_trie.sort((a,b) => { 
+      if(a.Abilities < b.Abilities) { return -1; }
+      if(a.Abilities > b.Abilities) { return 1; }
+      return 0;});
+
+    if (pokemon_premier == tri_abilite[0].Abilities) {
+      maj_pokemon(tri_abilite.reverse());
+      afficher(html_ordre_Nabilte,'abilite-pokemon');
+    }
+    else{
+      maj_pokemon(tri_abilite);
+      document.getElementById('abilite-pokemon').innerHTML = html_ordre_abilite;
+    }
+  }
+}
+
+function tri_types_liste(pokemon){
+  html_ordre_types = `<span>Types</span>
+  <span class="icon"><i class="fas fa-angle-up"></i></span>`
+
+  html_ordre_Ntypes = `<span>Types</span>
+  <span class="icon"><i class="fas fa-angle-down"></i></span>`
+
+  document.getElementById('types-pokemon').onclick = () => {
+    const pokemon_premier = pokemon[0].Types;
+    const liste_trie = pokemon;
+    const tri_types = liste_trie.sort((a,b) => { 
+      if(a.Types < b.Types) { return -1; }
+      if(a.Types > b.Types) { return 1; }
+      return 0;});
+
+    if (pokemon_premier == tri_types[0].Types) {
+      maj_pokemon(tri_types.reverse());
+      afficher(html_ordre_types,'types-pokemon');
+    }
+    else{
+      maj_pokemon(tri_types);
+      afficher(html_ordre_Ntypes,'types-pokemon');
+    }
+  }
+}
+
+
+function fetchPokemon(){
+  console.debug(`affichage des pokemons`);
+  
+
+  charge_donnees(serverUrl + "/pokemon", (pokemon) => {
+    // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
+    afficher(pokemonDetail(pokemon,0),'test')
+    maj_pokemon(pokemon);
+    chercher(pokemon);
+    tri(pokemon);
+
   });
 }
 
+function fetchCombat(){
+  return fetch(
+    serverUrl + "/fight",
+     { headers: { "Api-Key": user } })
+    .then((response) => {
+      if (response.status === 401) {
+        return response.json().then((json) => {
+          console.log(json);
+          return { err: json.message };
+        });
+      } else {
+        return response.json();
+      }
+    })
+    .catch((erreur) => ({ err: erreur }));
+}
+
+function affichage_combat(){
+  html = ` 
+  <div class="container is-fullhd">
+      <div class="columns is-centered">
+          <h1 class="title">Lancer un combat</h1>
+      </div>
+      <div class="columns is-centered">
+          <button class="button is-primary">lancer</button>
+      </div>
+      
+    </div>
+  </div> 
+  `
+  return html;
+}
+
+function lancement(){
+
+}
 
 /**
  * Génère le code HTML du corps de la modale de login. On renvoie en plus un
@@ -237,21 +369,13 @@ function genereModaleLoginBody(etatCourant) {
       : etatCourant.login;
   return {
     html: `
-  <section class="modal-card-body">
-    <div class="field">
-      <p class="control has-icons-left">
-        <input id="api-key" class="input" type="password" placeholder="API-KEY">
-          <span class="icon is-small is-left">
-            <i class="fas fa-lock"></i>
-          </span>
-      </p>
+    <section class="modal-card-body">
+    <div id="elt-affichage-login">
+    <p id="affiche-erreur">
+    </p>
+    <label for="Api">Api-key:</label>
+    <input type="password" id="api-key" >
     </div>
-
-    <div  id="elt-affichage-login" >
-      <p id="affiche-erreur">
-      </p>
-    </div>
-
   </section>`
   ,
     callbacks: {}
@@ -284,10 +408,7 @@ function genereModaleLoginHeader(etatCourant) {
   };
 }
 
-/* function etatconnecte(uti){
-  res = `<p> ${uti} </p>`;
-  return res;
-} */
+
 function etataffiche(uti){
   const etatactuelle = document.getElementById('etat-du-modal');
   etatactuelle.innerHTML = etatconnecte(uti);
@@ -304,8 +425,8 @@ function genereModaleLoginFooter(etatCourant) {
   return {
     html: `
   <footer class="modal-card-foot" style="justify-content: flex">
-  <button id="btn-valid-login-modal2" class="button ">Valider</button>
-  <button id="btn-close-login-modal2" class="button ">Annuler</button>
+    <button id="btn-close-login-modal2" class="button">Annuler</button>
+    <button id="btn-valid-login-modal2" class="button">Valider</button>
   </footer>
   `,
     callbacks: {
@@ -369,87 +490,27 @@ function afficheModaleConnexion(etatCourant) {
  * @returns un objet contenant le code HTML dans le champ html et la description
  * des callbacks à enregistrer dans le champ callbacks
  */
- function genereBoutonConnexion(etatCourant) {
-
-  const htmlConnecte = `
-  <div class="navbar-end ">
+function genereBoutonConnexion(etatCourant) {
+  const html = `
+  <div class="navbar-end">
     <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-    <div class="navbar-item ">
-      <p class="buttons">
-        <a id="btn-open-login-modal" class="button is-success " > <span> Connexion </span> </a>
-      </p>
+    <div class="navbar-item">
+      <div class="buttons">
+        <a id="btn-open-login-modal" class="button is-light"> Connexion </a>
+      </div>
     </div>
   </div>`;
-
-  const htmlDeconnecte =  `
-  <div class="navbar-end ">
-  <div class="field">
-      <p  id="utilisateur" class="control has-icons-right">
-      ${etatCourant.login}
-          <span class="icon is-small is-left">
-            <i class="fas fa-user"></i>
-          </span>
-      </p>
-      </div>
-    </div>
-   
-  <div class="navbar-end ">
-      <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-      <div class="navbar-item ">
-        <p class="buttons">
-          <a id="btn-open-logout-modal" class="button is-danger " > <span> Déconnexion </span> </a>
-        </p>
-      </div>
-    </div>`;
-
-  if(etatCourant.login==undefined) {
-    return {
-      html: htmlConnecte,
-      callbacks: {
-        "btn-open-login-modal": {
-          onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
-        }, 
-      },
-  
-    };
-  }
-  else {  
-    return {
-    html: htmlDeconnecte,
+  return {
+    html: html,
     callbacks: {
-      "btn-open-logout-modal": {
-        onclick: () => majEtatEtPage(etatCourant, {login : undefined}),
-      }, 
+      "btn-open-login-modal": {
+        onclick: () => majEtatEtPage(etatCourant, {loginModal : true}),
+      },
     },
-
   };
 }
-}
 
 
-
-/*  function paginationPokemone(data) {
-  const tab=data.slice(0,10);
-  afficher_pokemon(tab);
-  document.getElementById("pagination").onclick(
-    tab.slice(tab.length, tab.length+10)
-    
-  )
-}  */
-
-
-
-
-
-
-
-function tri_tab(pokemon,mot){
-  const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
-  console.log(tri);
-  return tri;
-  //const name_pokemon = pokemon[0].Name;
-  //console.log(name_pokemon);
-}
 
 /**
  * Génère le code HTML de la barre de navigation et les callbacks associés.
@@ -474,22 +535,18 @@ function genereBarreNavigation(etatCourant) {
             <a id="btn-combat" class="button is-light"> Combat </a>
         </div>
       </div>
+      ${connexion.html}
     </div>
-    ${connexion.html}
   </nav>`,
     callbacks: {
       ...connexion.callbacks,
       "btn-pokedex": { onclick: () => console.log("click bouton pokedex") },
+
+      "btn-combat": { onclick: () => document.getElementById('combat-de-pokemon').innerHTML = affichage_combat()}
       
     },
   };
 }
-
-
-
-/* function genererFooterNavigation(pokemon) {
-  paginationPokemone(liste_pokemon(pokemon,'test'));
-} */
 
 /**
  * Génére le code HTML de la page ainsi que l'ensemble des callbacks à
@@ -502,9 +559,6 @@ function genereBarreNavigation(etatCourant) {
 function generePage(etatCourant) {
   const barredeNavigation = genereBarreNavigation(etatCourant);
   const modaleLogin = genereModaleLogin(etatCourant);
-/*   const footerNavigation = genererFooterNavigation(pokemon);*/  
-
-
   // remarquer l'usage de la notation ... ci-dessous qui permet de "fusionner"
   // les dictionnaires de callbacks qui viennent de la barre et de la modale.
   // Attention, les callbacks définis dans modaleLogin.callbacks vont écraser
@@ -578,7 +632,6 @@ function enregistreCallbacks(callbacks) {
  */
 function majPage(etatCourant) {
   console.log("CALL majPage");
-/*   console.log(etatCourant.login);*/  
   const page = generePage(etatCourant);
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
@@ -602,7 +655,9 @@ function initClientPokemons() {
 // Appel de la fonction init_client_duels au après chargement de la page
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
+
+  
   initClientPokemons();
   fetchPokemon();
-  console.log("cbbf7dc5-f749-44a6-9d9c-32858e355a37")
+  console.log("6728f7dc-119d-4db8-914e-cc2954355b14")
 });
