@@ -49,17 +49,7 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
   </p>
   </section>
   ` ;
-  const reussie = `
-  <section class="modal-card-body">
-  <p id="elt-affichage-login">
-    <div id="affiche-erreur">
-      <div class="notification is-success">
-        Connexion réussie
-      </div>
-    </div>
-  </p>
-  </section>
-  `;
+
 
   return fetchWhoami().then((data) => {
     majEtatEtPage(etatCourant, {
@@ -73,8 +63,7 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
       
     }
     else {
-      majEtatEtPage(etatCourant, {loginModal : true, login : data.user});
-      document.getElementById('affiche-erreur').innerHTML = reussie;
+      majEtatEtPage(etatCourant, {loginModal : false, login : data.user});
       alert(`Connexion réussie. Utilisateur :  ${data.user}`);
     }
   });
@@ -452,8 +441,8 @@ function genereModaleLoginFooter(etatCourant) {
   return {
     html: `
   <footer class="modal-card-foot" style="justify-content: flex">
-    <button id="btn-close-login-modal2" class="button">Annuler</button>
     <button id="btn-valid-login-modal2" class="button">Valider</button>
+    <button id="btn-close-login-modal2" class="button">Annuler</button>
   </footer>
   `,
     callbacks: {
@@ -533,8 +522,8 @@ function afficheModaleConnexion(etatCourant) {
   <div class="navbar-end ">
   <div class="field">
       <p  id="utilisateur" class="control has-icons-right">
-      ${etatCourant.login}
-          <span class="icon is-small is-left">
+      Utilisateur : ${etatCourant.login}
+          <span class="icon-text is-small is-left">
             <i class="fas fa-user"></i>
           </span>
       </p>
@@ -590,8 +579,11 @@ function genereBarreNavigation(etatCourant) {
     <div class="navbar">
       <div class="navbar-item">
         <div class="field">
-          <div class="control has-icons_left">
+          <div class="control has-icons-left">
             <input class="input" id="input-pokemon" placeholder="Chercher un pokemon" type="text">
+            <span class="icon is-small is-left">
+            <i class="fas fa-search"></i>
+          </span>
           </div>
         </div>
         <div class="buttons">
@@ -599,8 +591,8 @@ function genereBarreNavigation(etatCourant) {
             <a id="btn-combat" class="button is-light"> Combat </a>
         </div>
       </div>
-      ${connexion.html}
     </div>
+    ${connexion.html}
   </nav>`,
     callbacks: {
       ...connexion.callbacks,
