@@ -443,7 +443,6 @@ function affichage_deck(etatCourant) {
       charge_donnees(serverUrl + "/pokemon", (pokemon) => {
         affichage_tab_header();
         const pokemon_deck = pokemon.filter((pok)=> data.some((deck) => deck == pok.PokedexNumber ));  
-        console.log(pokemon_deck);
         maj_pokemon(pokemon_deck);
       });
 
@@ -839,7 +838,8 @@ function majPage(etatCourant) {
   const page = generePage(etatCourant);
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
-  Pokedex_main(etatCourant)
+  Pokedex_main(etatCourant);
+  affichage_pokemon_tab(etatCourant);
 }
 
 /**
@@ -856,14 +856,12 @@ function initClientPokemons() {
     nb_pokemon: 10,
   };
   majPage(etatInitial);
-  
 }
 
 // Appel de la fonction init_client_duels au après chargement de la page
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
-  
 
   console.log("6728f7dc-119d-4db8-914e-cc2954355b14");
   console.log("cbbf7dc5-f749-44a6-9d9c-32858e355a37");
