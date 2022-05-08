@@ -146,10 +146,7 @@ function pokemonDetail(pokemon, i) {
   </div>
   <div class="card-footer">
     <article class="media">
-      <div class="media-content">
-        <button class="is-success button" tabindex="0">
-          Ajouter à mon deck
-        </button>
+      <div id="affiche_ajout" class="media-content">
       </div>
     </article>
   </div>
@@ -223,16 +220,17 @@ function charge_donnees(url, callback) {
     .catch((erreur) => ({ err: erreur }));
 }
 
-function maj_pokemon(pokemon) {
+function maj_pokemon(pokemon,data) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
 
   chercher(pokemon);
   tri(pokemon);
+
   pokemon.forEach((pok, i) => {
     const element = document.getElementById('' + pok.Name);
     element.onclick = () => {
-      pokemon.map((opt, i) => document.getElementById('' + pokemon[i].Name).className = " ");
+      pokemon.map((opt) => document.getElementById('' + opt.Name).className = " ");
       element.className = "is-selected";
       afficher(pokemonDetail(pokemon, i), 'detail-pokemon');
     }
@@ -415,6 +413,14 @@ function Pokedex_main(etatCourant) {
     
 }
 
+function ajouter_deck(etatCourant,pokemon){
+  const html = `<button id="ajouter" class="is-success button" tabindex="0">
+  Ajouter à mon deck
+</button>`
+
+  afficher(html,'affiche_ajout');
+  document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login,pokemon);
+}
 
 function fetchDeck(etatCourant) {
   console.debug(`deck`);
@@ -447,6 +453,17 @@ function affichage_deck(etatCourant) {
       });
 
     })
+}
+
+function PostDeck(apiKey,deck){
+  return fetch(serverUrl + "/deck", {
+    method: 'POST',
+    headers: { "Api-Key": apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify(deck)
+  })
+    .then((response) => {
+      console.log(response);
+    });
 }
 
 function affichage_combat() {
