@@ -1,7 +1,7 @@
 /* ******************************************************************
  * Constantes de configuration
  * ****************************************************************** */
-const apiKey = "6728f7dc-119d-4db8-914e-cc2954355b14"; //"69617e9b-19db-4bf7-a33f-18d4e90ccab7";
+//const apiKey = "6728f7dc-119d-4db8-914e-cc2954355b14"; //"69617e9b-19db-4bf7-a33f-18d4e90ccab7";
 const serverUrl = "https://lifap5.univ-lyon1.fr";
 
 /* ******************************************************************
@@ -13,11 +13,10 @@ const serverUrl = "https://lifap5.univ-lyon1.fr";
  * Fait une requête GET authentifiée sur /whoami
  * @returns une promesse du login utilisateur ou du message d'erreur
  */
-function fetchWhoami() {
-  const user = document.getElementById("api-key").value;
-  //console.log(user);
+function fetchWhoami(apiKey) {
+  console.log(apiKey);
 
-  return fetch(serverUrl + "/whoami", { headers: { "Api-Key": user } })
+  return fetch(serverUrl + "/whoami", { headers: { "Api-Key": apiKey } })
     .then((response) => {
       if (response.status === 401) {
         return response.json().then((json) => {
@@ -30,6 +29,8 @@ function fetchWhoami() {
     })
     .catch((erreur) => ({ err: erreur }));
 }
+
+
 /**
  * Fait une requête sur le serveur et insère le login dans la modale d'affichage
  * de l'utilisateur puis déclenche l'affichage de cette modale.
@@ -51,7 +52,7 @@ function lanceWhoamiEtInsereLogin(etatCourant) {
   ` ;
 
 
-  return fetchWhoami().then((data) => {
+  return fetchWhoami(etatCourant.apiKey).then((data) => {
     majEtatEtPage(etatCourant, {
       login: data.user, // qui vaut undefined en cas d'erreur
       errLogin: data.err, // qui vaut undefined si tout va bien
@@ -63,8 +64,10 @@ function lanceWhoamiEtInsereLogin(etatCourant) {
 
     }
     else {
+
       majEtatEtPage(etatCourant, { loginModal: false, login: data.user });
-      alert(`Connexion réussie. Utilisateur :  ${data.user}`);
+      afficher_deck(data.user);
+      alert(`Connexion réussie. Utilisateur : ${data.user}`);
     }
   });
 }
@@ -367,18 +370,16 @@ function fetchPokemon() {
 
   });
 }
-
-function fetchDeck(etatCourant){
-  console.debug(`deck`);
-  charge_donnees(serverUrl + "/deck/" + etatCourant.login , (deck) => {
-    console.log(deck);
-  })
+function afficher_deck(user) {
+  document.getElementById('tab-tout').onclick = () => deck_option(user);
 }
 
-function fetchCombat() {
+function fetchDeck(user) {
+  console.debug(`deck`);
+  console.log(user);
   return fetch(
-    serverUrl + "/fight",
-    { headers: { "Api-Key": user } })
+    serverUrl + "/deck/" + user,
+    { headers: { "Api-Key": apiKey } })
     .then((response) => {
       if (response.status === 401) {
         return response.json().then((json) => {
@@ -392,23 +393,68 @@ function fetchCombat() {
     .catch((erreur) => ({ err: erreur }));
 }
 
+function deck_option(user) {
+  return fetchDeck(user)
+    .then((data) => {
+      afficher(liste_pokemon());
+    })
+}
+
+function affichage_deck() {
+  const html = ``;
+}
+
 function affichage_combat() {
-  html = ` 
+  const html = ` 
   <div class="container is-fullhd">
       <div class="columns is-centered">
           <h1 class="title">Lancer un combat</h1>
       </div>
       <div class="columns is-centered">
-          <button class="button is-primary">lancer</button>
+          <button id="combat"class="button is-primary">lancer</button>
       </div>
-      
+      <div class="box" id= "resulat">
+      </div>
     </div>
   </div> 
   `
+
   return html;
 }
 
-function lancement() {
+function postPokemonCombat(apiKey) {
+  return fetch(serverUrl + "/fight", {
+    method: 'POST',
+    headers: { "Api-Key": apiKey }
+  })
+    .then((response) => {
+      if (response == "Api-Key requis") {
+        console.log("Veuillez vous connectez à l'aide de votre Api-Key")
+      }
+      else {
+        return response.json();
+      }
+    });
+}
+
+function resultatCombat(etatCourant) {
+  document.getElementById('combat').onclick = () => {
+    if (etatCourant.apiKey == undefined) {
+      alert(`vous n'etes plus connectée`);
+    } else {
+      return postPokemonCombat(etatCourant.apiKey).then((data) => {
+        console.log(data.Winner);
+        if (data.Winner === "right") {
+          console.log("Le gagnant est : " + data.DeckRight.User);
+          afficher(`<p id="fightresult"> ⚔️ Le gagnant est:   ${data.DeckRight.User}   ⚔️</p>`, 'resulat');
+        }
+        else {
+          console.log("Le gagnant est : " + data.DeckLeft.User);
+          afficher(`<p id="fightresult"> ⚔️ Le gagnant est:  ${data.DeckLeft.User}  ⚔️</p>`, 'resulat');
+        }
+      })
+    }
+  }
 
 }
 
@@ -494,10 +540,7 @@ function genereModaleLoginFooter(etatCourant) {
         onclick: () => majEtatEtPage(etatCourant, { loginModal: false }),
       },
       "btn-valid-login-modal2": {
-        onclick: () => {
-          afficheModaleConnexion(etatCourant);
-
-        },
+        onclick: () => afficheModaleConnexion(etatCourant),
       },
     },
   };
@@ -540,6 +583,8 @@ function genereModaleLogin(etatCourant) {
  * @param {Etat} etatCourant
  */
 function afficheModaleConnexion(etatCourant) {
+  user_api = document.getElementById("api-key").value;
+  etatCourant.apiKey = user_api;
   lanceWhoamiEtInsereLogin(etatCourant);
 }
 
@@ -599,7 +644,7 @@ function genereBoutonConnexion(etatCourant) {
       html: htmlDeconnecte,
       callbacks: {
         "btn-open-logout-modal": {
-          onclick: () => majEtatEtPage(etatCourant, { login: undefined }),
+          onclick: () => majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined }),
         },
       },
 
@@ -642,10 +687,24 @@ function genereBarreNavigation(etatCourant) {
       ...connexion.callbacks,
       "btn-pokedex": { onclick: () => fetchPokemon() },
 
-      "btn-combat": { onclick: () => document.getElementById('combat-de-pokemon').innerHTML = affichage_combat() }
+      "btn-combat": {
+        onclick: () => {
+          if (etatCourant.login == undefined){
+            afficher(`<p class="is-centered">Connectez-vous pour pouvoir affronter d'autre pokemon</p>`,'combat-de-pokemon')
+          }
+          else{
+            afficher(affichage_combat(), 'combat-de-pokemon');
+            resultatCombat(etatCourant);
+          }
+        }
+      }
 
     },
   };
+}
+
+function generePokedex(etatCourant) {
+
 }
 
 /**
@@ -757,6 +816,8 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
   fetchPokemon();
+
+
   console.log("6728f7dc-119d-4db8-914e-cc2954355b14");
   console.log("cbbf7dc5-f749-44a6-9d9c-32858e355a37");
 });
