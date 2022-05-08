@@ -313,6 +313,24 @@ function tri_types_liste(pokemon) {
   }
 }
 
+const tab = [];
+
+ function AfficherPlus(pokemon, index) {
+  if(index>pokemon.length){return;}
+
+  Array.prototype.push.apply(tab, pokemon.slice(index, index + 9));
+  const html = liste_pokemon(tab);
+  afficher(html, 'test');
+  // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
+  maj_pokemon(tab);
+  chercher(tab);
+  tri(tab);
+
+  const bouton = document.getElementById("btnPlus");
+  bouton.onclick = () => { AfficherPlus(pokemon, index + 10) };
+
+} 
+
 function fetchPokemon() {
   const html = `
   <div class="columns">
@@ -350,6 +368,12 @@ function fetchPokemon() {
           <tbody id="test">
           </tbody>
         </table>
+         <div class="columns is-centered">
+          <span class="icon ">
+            <button class="button is-normal is-rounded is-responsive fas fa-arrow-up" id="btnMoins" > Less </button>
+            <button class="button is-normal is-rounded is-responsive fas fa-arrow-down" id="btnPlus" > More </button>
+          </span> 
+        </div>
       </div>
     </div>
     <div class="column">
@@ -360,14 +384,13 @@ function fetchPokemon() {
   afficher(html, 'combat-de-pokemon');
   console.debug(`affichage des pokemons`);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
-    // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
 
+    AfficherPlus(pokemon, 0);
+    
     //affichage du detail du premier pokemon
     afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
-    maj_pokemon(pokemon);
-    chercher(pokemon);
-    tri(pokemon);
 
+    
   });
 }
 function afficher_deck(user) {
@@ -405,7 +428,7 @@ function affichage_deck() {
 }
 
 function affichage_combat() {
-  const html = ` 
+const html = ` 
   <div class="container is-fullhd">
       <div class="columns is-centered">
           <h1 class="title">Lancer un combat</h1>
@@ -644,7 +667,10 @@ function genereBoutonConnexion(etatCourant) {
       html: htmlDeconnecte,
       callbacks: {
         "btn-open-logout-modal": {
-          onclick: () => majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined }),
+          onclick: () => {
+            majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined });
+            fetchPokemon();
+        },
         },
       },
 
@@ -701,10 +727,6 @@ function genereBarreNavigation(etatCourant) {
 
     },
   };
-}
-
-function generePokedex(etatCourant) {
-
 }
 
 /**
