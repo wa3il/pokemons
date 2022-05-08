@@ -162,7 +162,44 @@ function afficher(codeHTML, destination) {
   document.getElementById(destination).innerHTML = codeHTML;
 }
 
+function affichage_tab_header(){
+  const html = `
+  <table class="table">
+        <thead>
+          <tr>
+            <th><span>Image</span></th>
+            <th id = "number-pokemon">
+              <span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>
+            </th>
+            <th id="name-pokemon">
+              <span>Name</span>
+              <span class="icon"><i class="fas fa-angle-up"></i></span>
+            </th>
+            <th id="abilite-pokemon">
+              <span>Abilities</span>
+              <span class="icon"><i class="fas fa-angle-up"></i></span>
+            </th>
+            <th id="types-pokemon">
+              <span>Types</span>
+              <span class="icon"><i class="fas fa-angle-up"></i></span>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="test">
+        </tbody>
+      </table>
+       <div class="columns is-centered">
+        <span class="icon ">
+          <button class="button is-normal is-rounded is-responsive fas fa-arrow-up" id="btnMoins" > Less </button>
+          <button class="button is-normal is-rounded is-responsive fas fa-arrow-down" id="btnPlus" > More </button>
+        </span> 
+      </div>
+  `
+  afficher(html,'tbl-pokemons');
+}
+
 function affichage_pokemon_tab(etatCourant){
+  affichage_tab_header();
   console.debug(`affichage des pokemons`);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
 
@@ -190,7 +227,8 @@ function maj_pokemon(pokemon) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
 
-
+  chercher(pokemon);
+  tri(pokemon);
   pokemon.forEach((pok, i) => {
     const element = document.getElementById('' + pok.Name);
     element.onclick = () => {
@@ -199,6 +237,7 @@ function maj_pokemon(pokemon) {
       afficher(pokemonDetail(pokemon, i), 'detail-pokemon');
     }
   })
+  
 }
 
 function chercher(pokemon) {
@@ -332,15 +371,15 @@ const tab = [];
   afficher(html, 'test');
   // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
   maj_pokemon(tab);
-  chercher(tab);
-  tri(tab);
+  //chercher(tab);
+  //tri(tab);
 
   const bouton = document.getElementById("btnPlus");
   bouton.onclick = () => { AfficherPlus(pokemon, index + 10) };
 
 } 
 
-function Pokedex_main(etatCourant) {
+function affichage_header(){
   const html = `
   <div class="columns">
     <div class="column">
@@ -353,36 +392,6 @@ function Pokedex_main(etatCourant) {
         </ul>
       </div>
       <div id="tbl-pokemons">
-        <table class="table">
-          <thead>
-            <tr>
-              <th><span>Image</span></th>
-              <th id = "number-pokemon">
-                <span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>
-              </th>
-              <th id="name-pokemon">
-                <span>Name</span>
-                <span class="icon"><i class="fas fa-angle-up"></i></span>
-              </th>
-              <th id="abilite-pokemon">
-                <span>Abilities</span>
-                <span class="icon"><i class="fas fa-angle-up"></i></span>
-              </th>
-              <th id="types-pokemon">
-                <span>Types</span>
-                <span class="icon"><i class="fas fa-angle-up"></i></span>
-              </th>
-            </tr>
-          </thead>
-          <tbody id="test">
-          </tbody>
-        </table>
-         <div class="columns is-centered">
-          <span class="icon ">
-            <button class="button is-normal is-rounded is-responsive fas fa-arrow-up" id="btnMoins" > Less </button>
-            <button class="button is-normal is-rounded is-responsive fas fa-arrow-down" id="btnPlus" > More </button>
-          </span> 
-        </div>
       </div>
     </div>
     <div class="column">
@@ -391,9 +400,18 @@ function Pokedex_main(etatCourant) {
     </div>`
 
   afficher(html, 'combat-de-pokemon');
+}
+
+function Pokedex_main(etatCourant) {
+  affichage_header();
 
   document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab(etatCourant);
-  document.getElementById('tab-tout').onclick = () => affichage_deck(etatCourant);
+  document.getElementById('tab-tout').onclick = () =>{
+    if( etatCourant.login == undefined ){
+      afficher(`<p>erreur : veuillez-vous connecter !</p>`,'tbl-pokemons');
+    }
+    else { affichage_deck(etatCourant);}
+  } 
     
 }
 
@@ -420,7 +438,15 @@ function fetchDeck(etatCourant) {
 function affichage_deck(etatCourant) {
   return fetchDeck(etatCourant)
     .then((data) => {
-      afficher(`<p>${data} </p>`,'tbl-pokemons');
+      console.log(data);
+      
+      charge_donnees(serverUrl + "/pokemon", (pokemon) => {
+        affichage_tab_header();
+        const pokemon_deck = pokemon.filter((pok)=> data.some((deck) => deck == pok.PokedexNumber ));  
+        console.log(pokemon_deck);
+        maj_pokemon(pokemon_deck);
+      });
+
     })
 }
 
