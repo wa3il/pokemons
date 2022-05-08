@@ -64,9 +64,7 @@ function lanceWhoamiEtInsereLogin(etatCourant) {
 
     }
     else {
-
       majEtatEtPage(etatCourant, { loginModal: false, login: data.user });
-      afficher_deck(data.user);
       alert(`Connexion réussie. Utilisateur : ${data.user}`);
     }
   });
@@ -164,6 +162,17 @@ function afficher(codeHTML, destination) {
   document.getElementById(destination).innerHTML = codeHTML;
 }
 
+function affichage_pokemon_tab(etatCourant){
+  console.debug(`affichage des pokemons`);
+  charge_donnees(serverUrl + "/pokemon", (pokemon) => {
+
+  AfficherPlus(pokemon, 0);
+    
+  //affichage du detail du premier pokemon
+  afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
+  }
+)}
+
 /**
  *  fonction permettant de charger des données depuis une ressource séparée
  * @param {url} url une url
@@ -172,7 +181,7 @@ function afficher(codeHTML, destination) {
 function charge_donnees(url, callback) {
   return fetch(url)
     .then((response) => { console.log(response); return response.text() })
-    .then((txt) => { console.log(txt); return JSON.parse(txt) })
+    .then((txt) => { console.log("abdel");return JSON.parse(txt) })
     .then(callback)
     .catch((erreur) => ({ err: erreur }));
 }
@@ -331,7 +340,7 @@ const tab = [];
 
 } 
 
-function fetchPokemon() {
+function Pokedex_main(etatCourant) {
   const html = `
   <div class="columns">
     <div class="column">
@@ -382,27 +391,19 @@ function fetchPokemon() {
     </div>`
 
   afficher(html, 'combat-de-pokemon');
-  console.debug(`affichage des pokemons`);
-  charge_donnees(serverUrl + "/pokemon", (pokemon) => {
 
-    AfficherPlus(pokemon, 0);
+  document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab(etatCourant);
+  document.getElementById('tab-tout').onclick = () => affichage_deck(etatCourant);
     
-    //affichage du detail du premier pokemon
-    afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
-
-    
-  });
-}
-function afficher_deck(user) {
-  document.getElementById('tab-tout').onclick = () => deck_option(user);
 }
 
-function fetchDeck(user) {
+
+function fetchDeck(etatCourant) {
   console.debug(`deck`);
-  console.log(user);
+  console.log(etatCourant.login);
   return fetch(
-    serverUrl + "/deck/" + user,
-    { headers: { "Api-Key": apiKey } })
+    serverUrl + "/deck/" + etatCourant.login,
+    { headers: { "Api-Key": etatCourant.apiKey } })
     .then((response) => {
       if (response.status === 401) {
         return response.json().then((json) => {
@@ -416,15 +417,11 @@ function fetchDeck(user) {
     .catch((erreur) => ({ err: erreur }));
 }
 
-function deck_option(user) {
-  return fetchDeck(user)
+function affichage_deck(etatCourant) {
+  return fetchDeck(etatCourant)
     .then((data) => {
-      afficher(liste_pokemon());
+      afficher(`<p>${data} </p>`,'tbl-pokemons');
     })
-}
-
-function affichage_deck() {
-  const html = ``;
 }
 
 function affichage_combat() {
@@ -669,7 +666,7 @@ function genereBoutonConnexion(etatCourant) {
         "btn-open-logout-modal": {
           onclick: () => {
             majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined });
-            fetchPokemon();
+            Pokedex_main(etatCourant);
         },
         },
       },
@@ -711,7 +708,7 @@ function genereBarreNavigation(etatCourant) {
   </nav>`,
     callbacks: {
       ...connexion.callbacks,
-      "btn-pokedex": { onclick: () => fetchPokemon() },
+      "btn-pokedex": { onclick: () => Pokedex_main(etatCourant) },
 
       "btn-combat": {
         onclick: () => {
@@ -816,6 +813,7 @@ function majPage(etatCourant) {
   const page = generePage(etatCourant);
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
+  Pokedex_main(etatCourant)
 }
 
 /**
@@ -829,16 +827,17 @@ function initClientPokemons() {
     loginModal: false,
     login: undefined,
     errLogin: undefined,
+    nb_pokemon: 10,
   };
   majPage(etatInitial);
+  
 }
 
 // Appel de la fonction init_client_duels au après chargement de la page
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Exécution du code après chargement de la page");
   initClientPokemons();
-  fetchPokemon();
-
+  
 
   console.log("6728f7dc-119d-4db8-914e-cc2954355b14");
   console.log("cbbf7dc5-f749-44a6-9d9c-32858e355a37");
