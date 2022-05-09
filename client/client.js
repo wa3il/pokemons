@@ -124,8 +124,9 @@ function pokemonDetail(pokemon, i) {
 
 
   const pokemonDetail_html =
-    `<div class="card">
+    `<div  class="card">
   <div class="card-header">
+  <div id="num">${pokemon[i].PokedexNumber}</div>
     <div class="card-header-title">${pokemon[i].JapaneseName} (#${pokemon[i].PokedexNumber})</div>
   </div>
   <div class="card-content">
@@ -169,8 +170,7 @@ function pokemonDetail(pokemon, i) {
     <article class="media">
       <div id="affiche_ajout" class="media-content">
 
-
-
+      
 
       </div>
     </article>
@@ -277,13 +277,13 @@ function affichage_header_table() {
  * Fonction permettant de charger les données du server /Pokemons et les afficher grave a l'appel des fonctions AfficherPlus (More) AfficherMoins(Less)
  * 
  */
-function affichage_pokemon_tab() {
+function affichage_pokemon_tab(etatCourant) {
 
 
   console.debug(`affichage des pokemons`);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
-    AfficherPlus(pokemon, 0);
-    AfficherMoins(pokemon, 10);
+    AfficherPlus(pokemon, 0,etatCourant);
+    AfficherMoins(pokemon, 10,etatCourant);
 
     //affichage du detail du premier pokemon
     afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
@@ -318,11 +318,10 @@ function charge_donnees(url, callback) {
 /**
  * Fonction mettre a jour l'affichage des pokemons, de la recherche et tri
  */
-function maj_pokemon(pokemon) {
+function maj_pokemon(pokemon,etatCourant) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
-  chercher(pokemon);
-  tri(pokemon);
+
 
   //met a jour l'element appuyer(séléctionner en bleu) en mettant a jour le nom de sa classe et en rénitialsant l'ancien
   pokemon.forEach((pok, i) => {
@@ -331,8 +330,12 @@ function maj_pokemon(pokemon) {
       pokemon.map((opt) => document.getElementById('' + opt.Name).className = " ");
       element.className = "is-selected";
       afficher(pokemonDetail(pokemon, i), 'detail-pokemon');
+      maj_bouton_ajouter(etatCourant);
     }
   })
+
+  chercher(pokemon);
+  tri(pokemon);
 
 }
 
@@ -523,19 +526,17 @@ const tab = [];
 /**
  * Fonction qui limite l'affichage a 10 par 10 en appuyant sur "More"
  */
-function AfficherPlus(pokemon, index) {
+function AfficherPlus(pokemon, index, etatCourant) {
 
   Array.prototype.push.apply(tab, pokemon.slice(index, index + 10));
   const html = liste_pokemon(tab);
   afficher(html, 'test');
-  // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
-
-  maj_pokemon(pokemon.slice(0, 10));
+  maj_pokemon(pokemon.slice(0, 10), etatCourant);
   const bouton = document.getElementById("btnPlus");
   bouton.onclick = () => {
 
-    AfficherPlus(pokemon, index + 10);
-    maj_pokemon(tab);
+    AfficherPlus(pokemon, index + 10,etatCourant);
+    maj_pokemon(tab, etatCourant);
 
   };
 
@@ -545,17 +546,17 @@ function AfficherPlus(pokemon, index) {
 /**
  * Fonction qui baisse l'affichage en appuyant sur "Less"
  */
-function AfficherMoins(pokemon, index) {
+function AfficherMoins(pokemon, index, etatCourant) {
 
 
   if (tab.length > 10) { tab.splice(-10, index); }
 
-  maj_pokemon(tab);
+  maj_pokemon(tab, etatCourant);
   const html = liste_pokemon(tab);
   const bouton = document.getElementById("btnMoins");
   bouton.onclick = () => {
-    AfficherMoins(tab, index)
-    maj_pokemon(tab);
+    AfficherMoins(tab, index, etatCourant);
+    maj_pokemon(tab, etatCourant);
   };
 
 }
@@ -570,7 +571,7 @@ function AfficherMoins(pokemon, index) {
 function Pokedex_main(etatCourant) {
   affichage_header_table();
 
-  document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab();
+  document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab(etatCourant);
   document.getElementById('tab-tout').onclick = () => {
     if (etatCourant.login == undefined) {
       majEtatEtPage(etatCourant, { loginModal: true });
@@ -583,6 +584,36 @@ function Pokedex_main(etatCourant) {
 
 
 
+
+function maj_bouton_ajouter(etatCourant){
+  const idNum = document.getElementById('num');
+  const htmlr =  `<button id="retirer" class="is-danger button" tabindex="0">
+                    Retirer de mon deck
+                </button>` 
+  
+  const htmla =  `<button id="ajouter" class="is-success button" tabindex="0">
+                    Ajouter a mon deck
+                 </button>` 
+                 
+  if(etatCourant.login !== undefined){
+
+    if(etatCourant.deck.includes(idNum.value)){
+
+    afficher(htmla, 'affiche_ajout');
+    console.log("zebiiiiiiiii")
+    }
+  }
+  else{
+
+    afficher(htmlr, 'affiche_ajout');
+
+  }
+
+    
+
+
+
+}
 
 
 
@@ -619,7 +650,10 @@ function fetchDeck(etatCourant) {
 function affichage_deck(etatCourant) {
   return fetchDeck(etatCourant)
     .then((data) => {
-      console.log(data);
+      const tabDeck = [];
+      data.forEach((x) => tabDeck.push(x));
+      majEtatEtPage(etatCourant, {deck : tabDeck});
+      console.log(etatCourant.deck);
 
       charge_donnees(serverUrl + "/pokemon", (pokemon) => {
         affichage_table();
@@ -633,14 +667,14 @@ function affichage_deck(etatCourant) {
 
 
 
-function ajouter_deck(etatCourant, pokemon) {
+/* function ajouter_deck(etatCourant, pokemon) {
   const html = `<button id="ajouter" class="is-success button" tabindex="0">
                     Ajouter à mon deck
                 </button>`
 
   afficher(html, 'affiche_ajout');
   document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login, pokemon);
-}
+} */
 
 
 
@@ -648,12 +682,12 @@ function ajouter_deck(etatCourant, pokemon) {
 
 
 
-function PostDeck(apiKey, deck) {
-
+function PostDeck(deck) {
+const api_Key = document.getElementById("api-key").value;
   return fetch(serverUrl + "/deck", {
     method: 'POST',
     headers: {
-      "Api-Key": apiKey,
+      "Api-Key": api_Key,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(deck),
@@ -668,7 +702,14 @@ function PostDeck(apiKey, deck) {
 
 
 
+function pushDeck(etatCourant, pok){
+  fetchDeck(etatCourant.login)
+  .then((i) => {
+    Array.prototype.push.apply(pok);
 
+  })
+  PostDeck(pok);
+}
 
 
 
@@ -1149,7 +1190,7 @@ function majPage(etatCourant) {
   enregistreCallbacks(page.callbacks);
   Pokedex_main(etatCourant);
   affichage_table();
-  affichage_pokemon_tab();
+  affichage_pokemon_tab(etatCourant);
 }
 
 
@@ -1168,6 +1209,7 @@ function initClientPokemons() {
     loginModal: false,
     login: undefined,
     errLogin: undefined,
+    deck : [],
   };
   majPage(etatInitial);
 }
