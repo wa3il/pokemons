@@ -334,8 +334,8 @@ function maj_pokemon(pokemon,etatCourant) {
     }
   })
 
-  chercher(pokemon);
-  tri(pokemon);
+  //chercher(pokemon);
+  //tri(pokemon);
 
 }
 
@@ -359,7 +359,9 @@ function chercher_dans(pokemon, mot) {
 function chercher(pokemon) {
   document.getElementById('input-pokemon').oninput = () => {
     const cherche_liste = chercher_dans(pokemon, document.getElementById('input-pokemon').value);
-    afficher(liste_pokemon(cherche_liste), 'test');
+    maj_pokemon(cherche_liste);
+    tri(pokemon);
+
   }
 
 
@@ -532,11 +534,15 @@ function AfficherPlus(pokemon, index, etatCourant) {
   const html = liste_pokemon(tab);
   afficher(html, 'test');
   maj_pokemon(pokemon.slice(0, 10), etatCourant);
+  chercher(pokemon.slice(0, 10));
+  tri(pokemon.slice(0, 10));
   const bouton = document.getElementById("btnPlus");
   bouton.onclick = () => {
 
     AfficherPlus(pokemon, index + 10,etatCourant);
     maj_pokemon(tab, etatCourant);
+    chercher(tab);
+    tri(tab);
 
   };
 
@@ -552,11 +558,15 @@ function AfficherMoins(pokemon, index, etatCourant) {
   if (tab.length > 10) { tab.splice(-10, index); }
 
   maj_pokemon(tab, etatCourant);
+  chercher(tab);
+  tri(tab);
   const html = liste_pokemon(tab);
   const bouton = document.getElementById("btnMoins");
   bouton.onclick = () => {
     AfficherMoins(tab, index, etatCourant);
     maj_pokemon(tab, etatCourant);
+    chercher(tab);
+    tri(tab);
   };
 
 }
