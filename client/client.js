@@ -87,6 +87,7 @@ function lanceWhoamiEtInsereLogin(etatCourant) {
  */
 function liste_pokemon(pokemon) {
   //console.debug(`CALL liste_pokemon([${pokemon}])`);
+
   const pokemon_html = pokemon
     .map((opt, i) => `<tr id ="${pokemon[i].Name}" ${i == 0 ? 'class="is-selected"' : ''}>
   <td><img src=${pokemon[i].Images.Detail} width="64"/></td>
@@ -104,54 +105,92 @@ function liste_pokemon(pokemon) {
 
 
 /**
- * Fonction permettant l'affichage des détails d'un pokémon
- * et envoie le code HTML des détails
+ * Genere une liste d'abilite
+ * @param {*} Unpokemon un pokemon quelconque 
+ * @returns une liste html des abilités du pokemon
  */
-function pokemonDetail(pokemon, i) {
+function genere_abilite(Unpokemon){
+  const obj_abilite = Unpokemon.Abilities;
+  return obj_abilite.map((ab) => `<li> ${ab} </li>`).join('\n');
 
-  const obj_abilite = pokemon[i].Abilities;
-  const obj_liste_abilite = obj_abilite.map((ab) => `<li> ${ab} </li>`).join('\n');
+}
 
-  const obj_resist = pokemon[i].Against;
+
+
+
+/**
+ * Genere une liste des elements contre lesquelle le pokemon resist bien
+ * @param {*} Unpokemon un pokemon quelconque 
+ * @returns une liste html des resistance du pokemon
+ */
+function genere_resist(Unpokemon){
+  const obj_resist = Unpokemon.Against;
   const obj_resist_tab = Object.entries(obj_resist)
     .filter(([elem, value]) => value < 1)
     .map((res) => `<li> ${res[0]} </li>`).join('\n');
+  return obj_resist_tab;
+}
 
-  const obj_weak = pokemon[i].Against;
+
+
+
+/**
+ * Genere une liste des elements contre lesquelle le pokemon resiste moins 
+ * @param {*} Unpokemon un pokemon quelconque 
+ * @returns une liste html des faiblesse du pokemon
+ */
+function genere_faiblesse(Unpokemon){
+  const obj_weak = Unpokemon.Against;
   const obj_weak_list = Object.entries(obj_weak)
     .filter(([elem, value]) => value > 1)
     .map((res) => `<li> ${res[0]} </li>`).join('\n');
+  return obj_weak_list;
+}
 
 
-  const pokemonDetail_html =
-    `<div  class="card">
-  <div class="card-header">
-  <div id="num">${pokemon[i].PokedexNumber}</div>
-    <div class="card-header-title">${pokemon[i].JapaneseName} (#${pokemon[i].PokedexNumber})</div>
-  </div>
-  <div class="card-content">
-    <article class="media">
-      <div class="media-content">
-        <h1 class="title">${pokemon[i].Name}</h1>
-      </div>
-    </article>
-  </div>
+
+/**
+ * fonction permettant de crer une liste de detail
+ * @param Unpokemon un pokemon
+ * @returns le header de la carte des details
+ */
+function card_header(Unpokemon){
+  return html =
+  `<div  class="card">
+<div class="card-header">
+<div id="num">${Unpokemon.PokedexNumber}</div>
+  <div class="card-header-title">${Unpokemon.JapaneseName} (#${Unpokemon.PokedexNumber})</div>
+</div>
+<div class="card-content">
+  <article class="media">
+    <div class="media-content">
+      <h1 class="title">${Unpokemon.Name}</h1>
+    </div>
+  </article>
+</div>`
+}
+
+
+
+/* @returns le contenue en html de la carte des details */
+function card_content(Unpokemon){
+  return html =`
   <div class="card-content">
     <article class="media">
       <div class="media-content">
         <div class="content has-text-left">
-          <p>Hit points: ${pokemon[i].Hp}</p>
+          <p>Hit points: ${Unpokemon.Hp}</p>
           <h3>Abilities</h3>
           <ul>
-            ${obj_liste_abilite}
+            ${genere_abilite(Unpokemon)}
           </ul>
           <h3>Resistant against</h3>
           <ul>
-            ${obj_resist_tab}
+            ${genere_resist(Unpokemon)}
           </ul>
           <h3>Weak against</h3>
           <ul>
-            ${obj_weak_list}
+            ${genere_faiblesse(Unpokemon)}
           </ul>
         </div>
       </div>
@@ -159,26 +198,42 @@ function pokemonDetail(pokemon, i) {
         <figure class="image is-475x475">
           <img
             class=""
-            src=${pokemon[i].Images.Detail}
-            alt="${pokemon[i].Name}"
+            src=${Unpokemon.Images.Detail}
+            alt="${Unpokemon.Name}"
           />
         </figure>
       </figure>
     </article>
-  </div>
-  <div class="card-footer">
-    <article class="media">
-      <div id="affiche_ajout" class="media-content">
-
-      
-
-      </div>
-    </article>
-  </div>
   </div>`
-
-  return `${pokemonDetail_html}`;
 }
+
+/* @returns le footer en html de la carte des details */
+function card_footer(Unpokemon){
+  return html = `
+  <div class="card-footer">
+  <article class="media">
+    <div id="affiche_ajout" class="media-content">
+    </div>
+  </article>
+</div>
+</div>`
+}
+
+
+
+/**
+ * cette fonction affiche la carte detail pour un pokemon selectionner
+ * @param {*} Unpokemon un pokemon
+ * @returns la carte html d'un pokemon
+ */
+function pokemonDetail(Unpokemon) {
+  
+  return html = card_header(Unpokemon) 
+  + card_content(Unpokemon) 
+  + card_footer(Unpokemon);
+  
+}
+
 
 
 
@@ -194,51 +249,107 @@ function afficher(codeHTML, destination) {
 
 
 
+/** 
+ * Fonction qui renvoi le code HTML de la colonne Image
+ */
+function colonneImage() {
+  const html = `<th><span>Image</span></th>
+            <th id = "number-pokemon">
+              <span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>
+            </th>`
+  return html;
+}
+
+/** 
+ * Fonction qui renvoi le code HTML de la colonne Pokemon
+ */
+function colonnePokemon() {
+  const html = `<th id="name-pokemon">
+                  <span>Name</span>
+                  <span class="icon"><i class="fas fa-angle-up"></i></span>
+                </th>`
+  return html;
+}
+
+
+/** 
+ * Fonction qui renvoi le code HTML de la colonne Abilities
+ */
+function colonneAbilities() {
+  const html = `<th id="abilite-pokemon">
+                  <span>Abilities</span>
+                  <span class="icon"><i class="fas fa-angle-up"></i></span>
+                </th>`
+  return html;
+}
+
+
+/** 
+ * Fonction qui renvoi le code HTML de la colonne Types
+ */
+function colonneTypes() {
+  const html = `<th id="types-pokemon">
+                  <span>Types</span>
+                  <span class="icon"><i class="fas fa-angle-up"></i></span>
+                </th>`
+  return html;
+}
+
+
+/** 
+ * Fonction qui renvoi le code HTML des boutons More et Less
+ */
+function generePlusMoins()
+{
+  const html= `<span class="icon ">
+                <button class="button is-normal is-rounded is-responsive fas fa-arrow-up" id="btnMoins" > Less </button>
+                <button class="button is-normal is-rounded is-responsive fas fa-arrow-down" id="btnPlus" > More </button>
+              </span>`
+  return html;
+}
+
+
+
+
 /**
  * Fonction permettant l'affichage des noms des colonnes de la table avec un body vide ou on integrera les éléments du tableau
  * ainsi que l'affichage des bouton "More" et "Less" en bas du tableau
  */
 function affichage_table() {
-  const html = `
-  <table class="table">
-        <thead>
-          <tr>
-            <th><span>Image</span></th>
-            <th id = "number-pokemon">
-              <span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>
-            </th>
-            <th id="name-pokemon">
-              <span>Name</span>
-              <span class="icon"><i class="fas fa-angle-up"></i></span>
-            </th>
-            <th id="abilite-pokemon">
-              <span>Abilities</span>
-              <span class="icon"><i class="fas fa-angle-up"></i></span>
-            </th>
-            <th id="types-pokemon">
-              <span>Types</span>
-              <span class="icon"><i class="fas fa-angle-up"></i></span>
-            </th>
-          </tr>
-        </thead>
-        <tbody id="test">
+  const html = `<table class="table">
+                  <thead>
+                    <tr>
+                      ${colonneImage()}
+                      ${colonnePokemon()}
+                      ${colonneAbilities()}
+                      ${colonneTypes()}
+                    </tr>
+                  </thead>
+                  <tbody id="test">
+                  </tbody>
+                </table>
+                <div class="columns is-centered">
+                  ${generePlusMoins()}
+                </div>`
 
-        </tbody>
-      </table>
-       <div class="columns is-centered">
-        <span class="icon ">
-          <button class="button is-normal is-rounded is-responsive fas fa-arrow-up" id="btnMoins" > Less </button>
-          <button class="button is-normal is-rounded is-responsive fas fa-arrow-down" id="btnPlus" > More </button>
-        </span> 
-      </div>
-  `
   afficher(html, 'tbl-pokemons');
 }
 
 
 
 
-
+/**
+ * Fonctions qui renvoi le code HTML des boutons "Tous les pokemons" et "Mes pokemons" 
+*/
+function BoutonPokdeck(){
+  const html= `<li class="is-active" id="tab-all-pokemons">
+                  <a>Tous les pokemons</a>
+                </li>
+                <li id="tab-tout">
+                  <a>Mes pokemons</a>
+                </li>`
+  return html;
+}
 
 /**
  * Fonction permettant l'affichage des boutons au dessus de la table "Tous les pokemons" et "Mes pokemons"
@@ -249,12 +360,7 @@ function affichage_header_table() {
     <div class="column">
       <div class="tabs is-centered">
         <ul>
-          <li class="is-active" id="tab-all-pokemons">
-            <a>Tous les pokemons</a>
-          </li>
-          <li id="tab-tout">
-            <a>Mes pokemons</a>
-          </li>
+          ${BoutonPokdeck()}
         </ul>
       </div>
       <div id="tbl-pokemons">
@@ -284,6 +390,8 @@ function affichage_pokemon_tab(etatCourant) {
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
     AfficherPlus(pokemon, 0,etatCourant);
     AfficherMoins(pokemon, 10,etatCourant);
+    chercher(pokemon);
+    tri(pokemon);
 
     //affichage du detail du premier pokemon
     afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
@@ -322,14 +430,14 @@ function maj_pokemon(pokemon,etatCourant) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
 
-
+  
   //met a jour l'element appuyer(séléctionner en bleu) en mettant a jour le nom de sa classe et en rénitialsant l'ancien
   pokemon.forEach((pok, i) => {
     const element = document.getElementById('' + pok.Name);
     element.onclick = () => {
       pokemon.map((opt) => document.getElementById('' + opt.Name).className = " ");
       element.className = "is-selected";
-      afficher(pokemonDetail(pokemon, i), 'detail-pokemon');
+      afficher(pokemonDetail(pok), 'detail-pokemon');
       maj_bouton_ajouter(etatCourant);
     }
   })
@@ -360,7 +468,8 @@ function chercher(pokemon) {
   document.getElementById('input-pokemon').oninput = () => {
     const cherche_liste = chercher_dans(pokemon, document.getElementById('input-pokemon').value);
     maj_pokemon(cherche_liste);
-    tri(pokemon);
+    tri(cherche_liste);
+  
 
   }
 
@@ -534,15 +643,15 @@ function AfficherPlus(pokemon, index, etatCourant) {
   const html = liste_pokemon(tab);
   afficher(html, 'test');
   maj_pokemon(pokemon.slice(0, 10), etatCourant);
-  chercher(pokemon.slice(0, 10));
-  tri(pokemon.slice(0, 10));
+/*   chercher(pokemon.slice(0, 10));
+  tri(pokemon.slice(0, 10)); */
   const bouton = document.getElementById("btnPlus");
   bouton.onclick = () => {
 
     AfficherPlus(pokemon, index + 10,etatCourant);
     maj_pokemon(tab, etatCourant);
-    chercher(tab);
-    tri(tab);
+/*     chercher(tab);
+    tri(tab); */
 
   };
 
@@ -565,8 +674,8 @@ function AfficherMoins(pokemon, index, etatCourant) {
   bouton.onclick = () => {
     AfficherMoins(tab, index, etatCourant);
     maj_pokemon(tab, etatCourant);
-    chercher(tab);
-    tri(tab);
+ /*    chercher(tab);
+    tri(tab); */
   };
 
 }
@@ -610,12 +719,12 @@ function maj_bouton_ajouter(etatCourant){
     if(etatCourant.deck.includes(idNum.value)){
 
     afficher(htmla, 'affiche_ajout');
-    console.log("zebiiiiiiiii")
+    //console.log("")
     }
   }
   else{
 
-    afficher(htmlr, 'affiche_ajout');
+    //afficher(htmlr, 'affiche_ajout');
 
   }
 
@@ -677,14 +786,6 @@ function affichage_deck(etatCourant) {
 
 
 
-/* function ajouter_deck(etatCourant, pokemon) {
-  const html = `<button id="ajouter" class="is-success button" tabindex="0">
-                    Ajouter à mon deck
-                </button>`
-
-  afficher(html, 'affiche_ajout');
-  document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login, pokemon);
-} */
 
 
 
@@ -956,8 +1057,88 @@ function afficheModaleConnexion(etatCourant) {
 
 
 
+/**
+ * 
+ * @param  etatCourant 
+ * @returns Renvoi le HTML de bouton de connexion si on est connecté sinon renvoi le bouton deconnexion
+ */
+function boutonConnexion(etatCourant){
+  const html=`<div class="navbar-end ">
+                <div id="etat-du-modal" style="border-top-width: 20 px"></div>
+                <div class="navbar-item ">
+                  <p class="buttons">
+                    ${etatCourant.login == undefined ? '<a id="btn-open-login-modal" class="button is-success " > <span> Connexion </span> </a>' :
+                                                      '<a id="btn-open-logout-modal" class="button is-danger " > <span> Déconnexion </span> </a>' }
+                  </p>
+                </div>
+              </div>`
+  return html;
+}
 
 
+
+/**
+ * 
+ * @param {*} etatCourant 
+ * @returns Retourne le HTML de l'affichage du numero d'utilisateur
+ */
+function loginUtilisateur(etatCourant){
+  const html= `<div class="navbar-end ">
+                <div class="field">
+                    <p  id="utilisateur" class="control has-icons-right">
+                    Utilisateur : ${etatCourant.login}
+                        <span class="icon-text is-small is-left">
+                          <i class="fas fa-user"></i>
+                        </span>
+                    </p>
+                    </div>
+                  </div>`
+  return html;
+}
+
+
+/**
+ * 
+ * @param {*} etatCourant 
+ * @returns genere le bouton Connexion et met a jour la page et affiche la loginModal a l'appuie sur connexion
+ */
+function genereCo(etatCourant){
+  const htmlConnexion =boutonConnexion(etatCourant);
+  return {
+    html: htmlConnexion,
+      callbacks: {
+        "btn-open-login-modal": {
+          onclick: () => majEtatEtPage(etatCourant, { loginModal: true }),
+        },
+      },
+    }
+}
+
+
+
+/**
+ * 
+ * @param {*} etatCourant 
+ * @returns genere le bouton deconnexion et met a jour l'etat Courant => l'ApiKey login a undefined, donc déconnecte l'utilisateur
+ * et réaffiche le tableau des pokemon a l'issue de la deconnexion
+ */
+function genereDeco(etatCourant){
+  const htmlDeconnexion =boutonConnexion(etatCourant);
+  const htmlLogin = loginUtilisateur(etatCourant);
+
+  return {
+    html: htmlLogin + htmlDeconnexion,
+    callbacks: {
+      "btn-open-logout-modal": {
+        onclick: () => {
+          majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined });
+          Pokedex_main(etatCourant);
+        },
+      },
+    },
+
+  };
+}
 
 /**
  * Génère le code HTML et les callbacks pour la partie droite de la barre de
@@ -969,70 +1150,18 @@ function afficheModaleConnexion(etatCourant) {
 function genereBoutonConnexion(etatCourant) {
 
   //Le code HTML du bouton connexion
-  const htmlConnecte = `
-  <div class="navbar-end ">
-    <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-    <div class="navbar-item ">
-      <p class="buttons">
-        <a id="btn-open-login-modal" class="button is-success " > <span> Connexion </span> </a>
-      </p>
-    </div>
-  </div>`;
+  const connexion =genereCo(etatCourant);
+  const logout = genereDeco(etatCourant);
+if(etatCourant.login !== undefined) {return logout;}
 
+    else {return connexion;}
 
-  //Le code HTML du bouton déconnexion
-  const htmlDeconnecte = `
-  <div class="navbar-end ">
-  <div class="field">
-      <p  id="utilisateur" class="control has-icons-right">
-      Utilisateur : ${etatCourant.login}
-          <span class="icon-text is-small is-left">
-            <i class="fas fa-user"></i>
-          </span>
-      </p>
-      </div>
-    </div>
-   
-  <div class="navbar-end ">
-      <div id="etat-du-modal" style="border-top-width: 20 px"></div>
-      <div class="navbar-item ">
-        <p class="buttons">
-          <a id="btn-open-logout-modal" class="button is-danger " > <span> Déconnexion </span> </a>
-        </p>
-      </div>
-    </div>`;
+                                        
+  
+  
 
-  /**
-   * boucle qui nous fait basculer du bouton "connexion<=>déconnexion" grace a l'etatCourant du login
-  */
-  //Cas => utilisateur déconnecté => cela nous affiche la modale de connexion pour nous permettre de se connecter
-  if (etatCourant.login == undefined) {
-    return {
-      html: htmlConnecte,
-      callbacks: {
-        "btn-open-login-modal": {
-          onclick: () => majEtatEtPage(etatCourant, { loginModal: true }),
-        },
-      },
-
-    };
-  }
-  //Cas => utilisateur connecté => cela nous permet d'avoir le bouton déconnexion, ainsi que l'accés a notre pokedex
-  else {
-    return {
-      html: htmlDeconnecte,
-      callbacks: {
-        "btn-open-logout-modal": {
-          onclick: () => {
-            majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined });
-            Pokedex_main(etatCourant);
-          },
-        },
-      },
-
-    };
-  }
 }
+
 
 
 
