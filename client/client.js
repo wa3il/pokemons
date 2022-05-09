@@ -89,7 +89,7 @@ function liste_pokemon(pokemon) {
   const pokemon_html = pokemon
     .map((opt, i) => `<tr id ="${pokemon[i].Name}" ${i == 0 ? 'class="is-selected"' : ''}>
   <td><img src=${pokemon[i].Images.Detail} width="64"/></td>
-  <td>${pokemon[i].PokedexNumber}</td>
+  <td>${i+1}</td>
   <td><div class="content">${pokemon[i].Name}</div>  </td>
   <td> ${pokemon[i].Abilities} </td>
   <td> ${pokemon[i].Types} </td>
@@ -167,6 +167,10 @@ function pokemonDetail(pokemon, i) {
   <div class="card-footer">
     <article class="media">
       <div id="affiche_ajout" class="media-content">
+
+
+
+
       </div>
     </article>
   </div>
@@ -269,14 +273,14 @@ function affichage_header_table(){
 
 
 
-function affichage_pokemon_tab(etatCourant){
+function affichage_pokemon_tab(){
 
   affichage_table();
 
   console.debug(`affichage des pokemons`);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
   AfficherPlus(pokemon, 0);
-  AfficherMoins(pokemon,10);
+  AfficherMoins(pokemon, 10);
 
   //affichage du detail du premier pokemon
   afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
@@ -305,7 +309,7 @@ function charge_donnees(url, callback) {
 
 
 
-function maj_pokemon(pokemon,data) {
+function maj_pokemon(pokemon) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
 
@@ -484,21 +488,23 @@ function tri_types_liste(pokemon) {
 
 
 
-const tab = [];
 
+const tab = [];
  function AfficherPlus(pokemon, index) {
-  if(index>pokemon.length){return;}
 
   Array.prototype.push.apply(tab, pokemon.slice(index, index + 10));
   const html = liste_pokemon(tab);
   afficher(html, 'test');
-  // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
-  maj_pokemon(tab);
+// affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
 
-
-
+  maj_pokemon(pokemon.slice(0,10));
   const bouton = document.getElementById("btnPlus");
-  bouton.onclick = () => { AfficherPlus(pokemon, index + 10) };
+  bouton.onclick = () => { 
+    
+    AfficherPlus(pokemon, index+10);
+    maj_pokemon(tab);
+
+  };
 
 } 
 
@@ -506,17 +512,16 @@ const tab = [];
 function AfficherMoins(pokemon, index) {
 
 
-  if (pokemon.length<10) {return;}
-    pokemon.splice(-10, index);
-    console.log(tab);
-    const html = liste_pokemon(tab);
-    afficher(html, 'test');
-    maj_pokemon(tab);
-
-
-    const bouton = document.getElementById("btnMoins");
-    bouton.onclick = () => { AfficherMoins(tab,  index) };
+    if(tab.length>10)  {tab.splice(-10, index);}
   
+    maj_pokemon(tab);
+    const html = liste_pokemon(tab);
+    const bouton = document.getElementById("btnMoins");
+    bouton.onclick = () => { 
+                              AfficherMoins(tab,  index) 
+                              maj_pokemon(tab);
+                            };
+
   }
 
 
@@ -525,7 +530,7 @@ function AfficherMoins(pokemon, index) {
 function Pokedex_main(etatCourant) {
   affichage_header_table();
 
-  document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab(etatCourant);
+  document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab();
   document.getElementById('tab-tout').onclick = () =>{
     if( etatCourant.login == undefined ){
       majEtatEtPage(etatCourant, { loginModal: true });
@@ -585,8 +590,8 @@ function affichage_deck(etatCourant) {
 
 function ajouter_deck(etatCourant,pokemon){
   const html = `<button id="ajouter" class="is-success button" tabindex="0">
-  Ajouter à mon deck
-</button>`
+                    Ajouter à mon deck
+                </button>`
 
   afficher(html,'affiche_ajout');
   document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login,pokemon);
@@ -1082,7 +1087,7 @@ function majPage(etatCourant) {
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
   Pokedex_main(etatCourant);
-  affichage_pokemon_tab(etatCourant);
+  affichage_pokemon_tab();
 }
 
 
@@ -1101,7 +1106,6 @@ function initClientPokemons() {
     loginModal: false,
     login: undefined,
     errLogin: undefined,
-    nb_pokemon: 10,
   };
   majPage(etatInitial);
 }
