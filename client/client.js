@@ -394,7 +394,7 @@ function affichage_pokemon_tab(etatCourant) {
     tri(pokemon);
 
     //affichage du detail du premier pokemon
-    afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
+    afficher(pokemonDetail(pokemon[0]), 'detail-pokemon');
   }
   )
 }
