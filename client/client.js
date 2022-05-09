@@ -83,13 +83,14 @@ function lanceWhoamiEtInsereLogin(etatCourant) {
 
 /**
  * Fonction permettant de renvoyer une liste HTML d'un tableau entré en parametre
+ * si on veut afficher les numéro dans l'ordre on met {i+1} a la place de {pokemon[i].PokedexNumber}
  */
 function liste_pokemon(pokemon) {
   //console.debug(`CALL liste_pokemon([${pokemon}])`);
   const pokemon_html = pokemon
     .map((opt, i) => `<tr id ="${pokemon[i].Name}" ${i == 0 ? 'class="is-selected"' : ''}>
   <td><img src=${pokemon[i].Images.Detail} width="64"/></td>
-  <td>${i+1}</td>
+  <td>${pokemon[i].PokedexNumber}</td>
   <td><div class="content">${pokemon[i].Name}</div>  </td>
   <td> ${pokemon[i].Abilities} </td>
   <td> ${pokemon[i].Types} </td>
@@ -197,7 +198,7 @@ function afficher(codeHTML, destination) {
  * Fonction permettant l'affichage des noms des colonnes de la table avec un body vide ou on integrera les éléments du tableau
  * ainsi que l'affichage des bouton "More" et "Less" en bas du tableau
  */
-function affichage_table(){
+function affichage_table() {
   const html = `
   <table class="table">
         <thead>
@@ -231,7 +232,7 @@ function affichage_table(){
         </span> 
       </div>
   `
-  afficher(html,'tbl-pokemons');
+  afficher(html, 'tbl-pokemons');
 }
 
 
@@ -242,7 +243,7 @@ function affichage_table(){
 /**
  * Fonction permettant l'affichage des boutons au dessus de la table "Tous les pokemons" et "Mes pokemons"
  */
-function affichage_header_table(){
+function affichage_header_table() {
   const html = `
   <div class="columns">
     <div class="column">
@@ -272,20 +273,23 @@ function affichage_header_table(){
 
 
 
+/**
+ * Fonction permettant de charger les données du server /Pokemons et les afficher grave a l'appel des fonctions AfficherPlus (More) AfficherMoins(Less)
+ * 
+ */
+function affichage_pokemon_tab() {
 
-function affichage_pokemon_tab(){
-
-  affichage_table();
 
   console.debug(`affichage des pokemons`);
   charge_donnees(serverUrl + "/pokemon", (pokemon) => {
-  AfficherPlus(pokemon, 0);
-  AfficherMoins(pokemon, 10);
+    AfficherPlus(pokemon, 0);
+    AfficherMoins(pokemon, 10);
 
-  //affichage du detail du premier pokemon
-  afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
+    //affichage du detail du premier pokemon
+    afficher(pokemonDetail(pokemon, 0), 'detail-pokemon');
   }
-)}
+  )
+}
 
 
 
@@ -300,7 +304,7 @@ function affichage_pokemon_tab(){
 function charge_donnees(url, callback) {
   return fetch(url)
     .then((response) => { console.log(response); return response.text() })
-    .then((txt) => { console.log("abdel");return JSON.parse(txt) })
+    .then((txt) => { console.log("abdel"); return JSON.parse(txt) })
     .then(callback)
     .catch((erreur) => ({ err: erreur }));
 }
@@ -309,12 +313,18 @@ function charge_donnees(url, callback) {
 
 
 
+
+
+/**
+ * Fonction mettre a jour l'affichage des pokemons, de la recherche et tri
+ */
 function maj_pokemon(pokemon) {
   console.debug(`CALL maj pokemon`);
   afficher(liste_pokemon(pokemon), 'test');
-
   chercher(pokemon);
   tri(pokemon);
+
+  //met a jour l'element appuyer(séléctionner en bleu) en mettant a jour le nom de sa classe et en rénitialsant l'ancien
   pokemon.forEach((pok, i) => {
     const element = document.getElementById('' + pok.Name);
     element.onclick = () => {
@@ -323,17 +333,30 @@ function maj_pokemon(pokemon) {
       afficher(pokemonDetail(pokemon, i), 'detail-pokemon');
     }
   })
-  
+
 }
 
 
 
 
+/**
+ * Fonction qui filtre les noms des pokemons et qui permet l'utilisation des lettres majuscule
+ */
+function chercher_dans(pokemon, mot) {
+  const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
+  return tri;
 
+}
+
+
+
+/**
+ * Fonction qui appelle chercher_dans() en utilisant l'input et affiche la liste de recherche
+ */
 function chercher(pokemon) {
   document.getElementById('input-pokemon').oninput = () => {
     const cherche_liste = chercher_dans(pokemon, document.getElementById('input-pokemon').value);
-    afficher(liste_pokemon(cherche_liste),'test');
+    afficher(liste_pokemon(cherche_liste), 'test');
   }
 
 
@@ -342,17 +365,12 @@ function chercher(pokemon) {
 
 
 
-function chercher_dans(pokemon, mot) {
-  const tri = pokemon.filter((pok) => pok.Name.toLowerCase().includes(mot));
-  return tri;
-  //const name_pokemon = pokemon[0].Name;
-  //console.log(name_pokemon);
-}
 
 
 
-
-
+/**
+ * Fonction qui regroupe tout les tris par nom, numero,abilités et types
+ */
 function tri(pokemon) {
   tri_name(pokemon);
   tri_pokedex_number(pokemon);
@@ -364,7 +382,9 @@ function tri(pokemon) {
 
 
 
-
+/**
+ * Fonction qui effectur le tri par noms
+ */
 function tri_name(pokemon) {
   html_ordre_alpha = `<span>Name</span>#&nbsp
   <span class="icon"><i class="fas fa-angle-up"></i></span>`
@@ -392,7 +412,9 @@ function tri_name(pokemon) {
 
 
 
-
+/**
+ * Fonction qui effectur le tri par numéro
+ */
 function tri_pokedex_number(pokemon) {
   html_ordre_decroissant = `<span class="icon"><span>#&nbsp</span><i class="fas fa-angle-up"></i></span>`
 
@@ -420,7 +442,9 @@ function tri_pokedex_number(pokemon) {
 
 
 
-
+/**
+ * Fonction qui effectur le tri par abilités
+ */
 function tri_abilite_liste(pokemon) {
   html_ordre_abilite = `<span>Abilities</span>
   <span class="icon"><i class="fas fa-angle-up"></i></span>`
@@ -454,7 +478,9 @@ function tri_abilite_liste(pokemon) {
 
 
 
-
+/**
+ * Fonction qui effectur le tri par type
+ */
 function tri_types_liste(pokemon) {
   html_ordre_types = `<span>Types</span>
   <span class="icon"><i class="fas fa-angle-up"></i></span>`
@@ -489,55 +515,69 @@ function tri_types_liste(pokemon) {
 
 
 
+
+//Création d'un tableau vide en dehors de la fonction pour eviter de le vider a cause de la récursivité
 const tab = [];
- function AfficherPlus(pokemon, index) {
+
+
+/**
+ * Fonction qui limite l'affichage a 10 par 10 en appuyant sur "More"
+ */
+function AfficherPlus(pokemon, index) {
 
   Array.prototype.push.apply(tab, pokemon.slice(index, index + 10));
   const html = liste_pokemon(tab);
   afficher(html, 'test');
-// affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
+  // affichage de la liste des pokemon et rend cliquable chaque pokemon de la liste
 
-  maj_pokemon(pokemon.slice(0,10));
+  maj_pokemon(pokemon.slice(0, 10));
   const bouton = document.getElementById("btnPlus");
-  bouton.onclick = () => { 
-    
-    AfficherPlus(pokemon, index+10);
+  bouton.onclick = () => {
+
+    AfficherPlus(pokemon, index + 10);
     maj_pokemon(tab);
 
   };
 
-} 
+}
 
 
+/**
+ * Fonction qui baisse l'affichage en appuyant sur "Less"
+ */
 function AfficherMoins(pokemon, index) {
 
 
-    if(tab.length>10)  {tab.splice(-10, index);}
-  
+  if (tab.length > 10) { tab.splice(-10, index); }
+
+  maj_pokemon(tab);
+  const html = liste_pokemon(tab);
+  const bouton = document.getElementById("btnMoins");
+  bouton.onclick = () => {
+    AfficherMoins(tab, index)
     maj_pokemon(tab);
-    const html = liste_pokemon(tab);
-    const bouton = document.getElementById("btnMoins");
-    bouton.onclick = () => { 
-                              AfficherMoins(tab,  index) 
-                              maj_pokemon(tab);
-                            };
+  };
 
-  }
+}
 
 
 
 
+
+/**
+ * Fonction permettant d'afficher le deck d'un utilisateur si l'etatCourant !== undefined , sinon affiche a l'utilsateur la modale de connexion pour qu'il puisse entrer son ApiKey
+ */
 function Pokedex_main(etatCourant) {
   affichage_header_table();
 
   document.getElementById('tab-all-pokemons').onclick = () => affichage_pokemon_tab();
-  document.getElementById('tab-tout').onclick = () =>{
-    if( etatCourant.login == undefined ){
+  document.getElementById('tab-tout').onclick = () => {
+    if (etatCourant.login == undefined) {
       majEtatEtPage(etatCourant, { loginModal: true });
     }
-    else { affichage_deck(etatCourant);}
-  } 
-    
+    else { affichage_deck(etatCourant); }
+  }
+
 }
 
 
@@ -547,7 +587,9 @@ function Pokedex_main(etatCourant) {
 
 
 
-
+/**
+ * Méthode GET qui êrmet de récuperer le deck de l'utilisateur sur le server LIFAP5
+ */
 function fetchDeck(etatCourant) {
   console.debug(`deck`);
   console.log(etatCourant.login);
@@ -570,15 +612,18 @@ function fetchDeck(etatCourant) {
 
 
 
-
+/**
+ * Fonction qui appelle la fonction fetchDeck qui nous renvoi le deck de l'utilisateur pour filtrer la table des pokemons initiale 
+ * puis afficher les détails des pokémons qui ont le meme numéro que ceux dans le Deck dans l'onglet Mes pokémons.
+ */
 function affichage_deck(etatCourant) {
   return fetchDeck(etatCourant)
     .then((data) => {
       console.log(data);
-      
+
       charge_donnees(serverUrl + "/pokemon", (pokemon) => {
         affichage_table();
-        const pokemon_deck = pokemon.filter((pok)=> data.some((deck) => deck == pok.PokedexNumber ));  
+        const pokemon_deck = pokemon.filter((pok) => data.some((deck) => deck == pok.PokedexNumber));
         maj_pokemon(pokemon_deck);
       });
 
@@ -588,13 +633,13 @@ function affichage_deck(etatCourant) {
 
 
 
-function ajouter_deck(etatCourant,pokemon){
+function ajouter_deck(etatCourant, pokemon) {
   const html = `<button id="ajouter" class="is-success button" tabindex="0">
                     Ajouter à mon deck
                 </button>`
 
-  afficher(html,'affiche_ajout');
-  document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login,pokemon);
+  afficher(html, 'affiche_ajout');
+  document.getElementById('ajouter').onclick = () => PostDeck(etatCourant.login, pokemon);
 }
 
 
@@ -603,20 +648,22 @@ function ajouter_deck(etatCourant,pokemon){
 
 
 
-function PostDeck(apiKey,deck){
+function PostDeck(apiKey, deck) {
 
   return fetch(serverUrl + "/deck", {
     method: 'POST',
-    headers: { "Api-Key": apiKey, 
-              'Content-Type': 'application/json' },
-    body: JSON.stringify(deck)
+    headers: {
+      "Api-Key": apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(deck),
   })
-    .then((response)=>response.json())
-    .then((json)=>{
-      console.log({json});
+    .then((response) => response.json())
+    .then((json) => {
+      console.log({ json });
       return json;
     })
-    .catch((erreur)=>(console.log({erreur})));
+    .catch((erreur) => (console.log({ erreur })));
 }
 
 
@@ -625,9 +672,11 @@ function PostDeck(apiKey,deck){
 
 
 
-
+/**
+ * Fonction qui retourne le HTML la page combat
+ */
 function affichage_combat() {
-const html = ` 
+  const html = ` 
   <div class="container is-fullhd">
       <div class="columns is-centered">
           <h1 class="title">Lancer un combat</h1>
@@ -647,7 +696,9 @@ const html = `
 
 
 
-
+/**
+ * Fonction qui récupere grace a la méthode GET sur /fight le résultat du combat
+ */
 function postPokemonCombat(apiKey) {
   return fetch(serverUrl + "/fight", {
     method: 'POST',
@@ -667,7 +718,9 @@ function postPokemonCombat(apiKey) {
 
 
 
-
+/**
+ * Fonction qui affiche dans la box le résultat du combat "le gagnant"
+ */
 function resultatCombat(etatCourant) {
   document.getElementById('combat').onclick = () => {
     if (etatCourant.apiKey == undefined) {
@@ -864,6 +917,7 @@ function afficheModaleConnexion(etatCourant) {
  */
 function genereBoutonConnexion(etatCourant) {
 
+  //Le code HTML du bouton connexion
   const htmlConnecte = `
   <div class="navbar-end ">
     <div id="etat-du-modal" style="border-top-width: 20 px"></div>
@@ -874,6 +928,8 @@ function genereBoutonConnexion(etatCourant) {
     </div>
   </div>`;
 
+
+  //Le code HTML du bouton déconnexion
   const htmlDeconnecte = `
   <div class="navbar-end ">
   <div class="field">
@@ -895,6 +951,10 @@ function genereBoutonConnexion(etatCourant) {
       </div>
     </div>`;
 
+  /**
+   * boucle qui nous fait basculer du bouton "connexion<=>déconnexion" grace a l'etatCourant du login
+  */
+  //Cas => utilisateur déconnecté => cela nous affiche la modale de connexion pour nous permettre de se connecter
   if (etatCourant.login == undefined) {
     return {
       html: htmlConnecte,
@@ -906,6 +966,7 @@ function genereBoutonConnexion(etatCourant) {
 
     };
   }
+  //Cas => utilisateur connecté => cela nous permet d'avoir le bouton déconnexion, ainsi que l'accés a notre pokedex
   else {
     return {
       html: htmlDeconnecte,
@@ -914,7 +975,7 @@ function genereBoutonConnexion(etatCourant) {
           onclick: () => {
             majEtatEtPage(etatCourant, { login: undefined, apiKey: undefined });
             Pokedex_main(etatCourant);
-        },
+          },
         },
       },
 
@@ -962,10 +1023,10 @@ function genereBarreNavigation(etatCourant) {
 
       "btn-combat": {
         onclick: () => {
-          if (etatCourant.login == undefined){
-            majEtatEtPage(etatCourant, { loginModal: true })          
+          if (etatCourant.login == undefined) {
+            majEtatEtPage(etatCourant, { loginModal: true })
           }
-          else{
+          else {
             afficher(affichage_combat(), 'combat-de-pokemon');
             resultatCombat(etatCourant);
           }
@@ -1087,6 +1148,7 @@ function majPage(etatCourant) {
   document.getElementById("root").innerHTML = page.html;
   enregistreCallbacks(page.callbacks);
   Pokedex_main(etatCourant);
+  affichage_table();
   affichage_pokemon_tab();
 }
 
